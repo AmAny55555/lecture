@@ -29,7 +29,7 @@ export default function Login() {
       const token = Cookies.get("token");
 
       if (!token) {
-        setCheckingAuth(false); // انتهى التحقق، عرض الفورم
+        setCheckingAuth(false);
         return;
       }
 
@@ -51,7 +51,6 @@ export default function Login() {
           router.replace("/more-info");
         }
       } catch (error) {
-        // لو حصل خطأ بالتحقق، برضه توجه لمور إنفو
         router.replace("/more-info");
       }
     }
@@ -95,14 +94,13 @@ export default function Login() {
       const studentId = result.data?.userId;
 
       if (token) {
-        Cookies.set("token", token, { expires: 7 }); // خزن التوكن في الكوكيز 7 أيام
+        Cookies.set("token", token, { expires: 7 });
         Cookies.remove("studentDataComplete");
       }
 
       if (fullName) Cookies.set("userName", fullName, { expires: 7 });
       if (studentId) Cookies.set("studentId", studentId, { expires: 7 });
 
-      // بعد تسجيل الدخول تحقق من حالة البيانات
       const checkRes = await fetch(
         "https://eng-mohamedkhalf.shop/api/Students/CheckStudentData",
         {

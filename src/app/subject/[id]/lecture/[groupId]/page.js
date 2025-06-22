@@ -104,7 +104,6 @@ export default function LectureGroupPage() {
 
   return (
     <div className="min-h-screen p-4 bg-gray-50 relative" dir="rtl">
-      {/* سهم الرجوع */}
       <button
         onClick={() => router.back()}
         className="text-[#bf9916] text-3xl mb-4"
@@ -112,12 +111,10 @@ export default function LectureGroupPage() {
         &#8594;
       </button>
 
-      {/* عنوان الصفحة */}
       <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
         محاضرات - <span className="text-[#bf9916]">{groupData.name}</span>
       </h1>
 
-      {/* عرض روابط الفيديو */}
       <div className="flex flex-col gap-4">
         {groupData.onlineLectures?.map((lecture) => (
           <button
@@ -134,7 +131,6 @@ export default function LectureGroupPage() {
         ))}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div
           className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-50"

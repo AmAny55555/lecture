@@ -17,7 +17,7 @@ const tabs = [
     key: "qr",
     label: "محاضرات QR",
     icon: <FaQrcode />,
-    route: "qrlecture", // مهم جداً يكون كده
+    route: "qrlecture",
   },
   {
     key: "homework",
@@ -163,8 +163,7 @@ export default function DetailsPage() {
 function GroupGrid({ data, type, routePrefix, subjectId, subjectTeacherId }) {
   const router = useRouter();
 
-  if (!data || data.length === 0) return null; // NoItem يظهر في الأب
-
+  if (!data || data.length === 0) return null;
   return (
     <div className="grid grid-cols-2 gap-4 overflow-visible">
       {data.map((item) => (

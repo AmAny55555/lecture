@@ -64,7 +64,6 @@ export default function HomeworkGroupPage() {
 
   return (
     <div className="min-h-screen p-4 bg-gray-50" dir="rtl">
-      {/* زر الرجوع */}
       <button
         onClick={() => router.back()}
         className="text-[#bf9916] text-3xl mb-4"
@@ -72,12 +71,10 @@ export default function HomeworkGroupPage() {
         &#8594;
       </button>
 
-      {/* عنوان المجموعة */}
       <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
         واجبات - <span className="text-[#bf9916]">{groupData.name}</span>
       </h1>
 
-      {/* عرض روابط الواجبات */}
       <div className="flex flex-col gap-4">
         {groupData.homeWorks?.map((hw) => (
           <button

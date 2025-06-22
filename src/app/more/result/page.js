@@ -18,7 +18,6 @@ function Page() {
   const [examResult, setExamResult] = useState(null);
   const [loadingExam, setLoadingExam] = useState(true);
 
-  // جلب التوكين من الكوكيز
   const getToken = () => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; token=`);

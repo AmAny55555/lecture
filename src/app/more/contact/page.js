@@ -48,7 +48,6 @@ function Page() {
           <span className="text-[#d2ad28]">{contactData.phoneNumber}</span>
         </a>
 
-        {/* واتساب */}
         <a
           href={`https://wa.me/${formattedWhatsApp}`}
           target="_blank"

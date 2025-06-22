@@ -51,7 +51,7 @@ export default function LectureVideoPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
-  const [hasTriedFetching, setHasTriedFetching] = useState(false); // ✅ جديد
+  const [hasTriedFetching, setHasTriedFetching] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang = "ar";
@@ -63,7 +63,7 @@ export default function LectureVideoPage() {
 
     async function fetchLecture() {
       setLoading(true);
-      setHasTriedFetching(true); // ✅ تم المحاولة
+      setHasTriedFetching(true);
       try {
         const res = await fetch(
           `https://eng-mohamedkhalf.shop/api/OnlineLectures/GetOnlineLecture/${lectureId}`,
@@ -145,7 +145,6 @@ export default function LectureVideoPage() {
 
   return (
     <div>
-      {/* زر الرجوع ريسبونسيف */}
       <div className="flex justify-end mb-4 fixed top-4 right-4 sm:right-8 z-10">
         <button
           onClick={() => history.back()}
@@ -159,7 +158,6 @@ export default function LectureVideoPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 text-right">
         {lecture ? (
           <>
-            {/* ✅ الفيديو */}
             {videoEmbedUrl ? (
               <div className="mb-2 w-full aspect-video">
                 <iframe
@@ -173,17 +171,14 @@ export default function LectureVideoPage() {
               <p className="text-center text-[#bf9916]">لا يوجد فيديو</p>
             )}
 
-            {/* ✅ العنوان تحت الفيديو */}
             <h2 className="text-xl font-bold text-[#bf9916] mb-6">
               {lecture.name}
             </h2>
 
-            {/* ✅ input + السهم على الشمال */}
             <div
               className="mb-6 flex flex-row-reverse items-center gap-2"
               dir="rtl"
             >
-              {/* input */}
               <div className="relative flex-grow">
                 <FaRegCommentDots className="absolute right-3 top-3 text-[#bf9916]" />
                 <input
@@ -195,7 +190,6 @@ export default function LectureVideoPage() {
                 />
               </div>
 
-              {/* السهم على الشمال */}
               <button
                 onClick={handleSendComment}
                 disabled={sending}
@@ -208,7 +202,6 @@ export default function LectureVideoPage() {
 
             {error && <p className="text-[#bf9916] mt-2">{error}</p>}
 
-            {/* ✅ التعليقات */}
             <div className="mb-4">
               <h3 className="text-2xl font-medium mb-4 text-[#bf9916]">
                 التعليقات

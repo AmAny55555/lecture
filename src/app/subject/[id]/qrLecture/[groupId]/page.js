@@ -48,7 +48,6 @@ export default function QrLectureGroupPage() {
 
         const json = await res.json();
         if (json.errorCode === 0) {
-          // نبحث عن المجموعة التي id تطابق groupId
           const group = json.data.find((g) => g.id.toString() === groupId);
           setGroupData(group || null);
         }
@@ -72,7 +71,6 @@ export default function QrLectureGroupPage() {
 
   return (
     <div className="min-h-screen p-4 bg-gray-50" dir="rtl">
-      {/* زر رجوع */}
       <button
         onClick={() => router.back()}
         className="text-[#bf9916] text-3xl mb-4"
@@ -81,12 +79,10 @@ export default function QrLectureGroupPage() {
         &#8592;
       </button>
 
-      {/* عنوان المجموعة */}
       <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
         محاضرات QR - <span>{groupData.name}</span>
       </h1>
 
-      {/* عرض روابط الفيديوهات */}
       <div className="flex flex-col gap-4">
         {groupData.qrLectures?.map((lecture) => (
           <Link

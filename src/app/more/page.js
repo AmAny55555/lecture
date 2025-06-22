@@ -174,7 +174,6 @@ export default function Page() {
         return;
       }
 
-      // جلب بيانات المستخدم للحصول على رقم الهاتف
       const userInfoRes = await fetch(
         "https://eng-mohamedkhalf.shop/api/Users/GetUserInfo",
         {
@@ -205,7 +204,6 @@ export default function Page() {
         return;
       }
 
-      // طلب حذف الحساب مع رقم الهاتف
       const res = await fetch(
         "https://eng-mohamedkhalf.shop/api/Users/Forcelogout",
         {
@@ -351,7 +349,6 @@ export default function Page() {
           </div>
         )}
 
-        {/* مودال الشكاوى */}
         {complaintModal && (
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[9999]">
             <div className="bg-white p-6 rounded-2xl w-80 text-center shadow-xl space-y-4">
@@ -374,7 +371,6 @@ export default function Page() {
           </div>
         )}
 
-        {/* تنبيه نجاح الشكوى أو حذف الحساب */}
         {complaintSuccess && (
           <div className="fixed bottom-4 right-1/2 translate-x-1/2 z-[9999] animate-zoom-in">
             <div className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl text-lg font-semibold">

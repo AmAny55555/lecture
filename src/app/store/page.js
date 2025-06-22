@@ -3,9 +3,8 @@ import React, { useEffect, useState } from "react";
 import NoItem from "@/app/NoItem";
 import Spinner from "../components/Spinner";
 
-// دالة لجلب التوكين من الكوكيز
 function getTokenFromCookies() {
-  const cookieString = document.cookie; // مثال: "token=abc123; other=val"
+  const cookieString = document.cookie;
   const cookies = cookieString.split("; ").reduce((acc, current) => {
     const [name, value] = current.split("=");
     acc[name] = value;

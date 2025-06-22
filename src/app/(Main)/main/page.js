@@ -7,9 +7,8 @@ import { Autoplay } from "swiper/modules";
 import Spinner from "@/app/components/Spinner";
 import "swiper/css";
 
-// دالة تجلب التوكين من الكوكيز
 function getTokenFromCookies() {
-  const cookieString = document.cookie; // string مثل: "token=abc123; other=val"
+  const cookieString = document.cookie;
   const cookies = cookieString.split("; ").reduce((acc, current) => {
     const [name, value] = current.split("=");
     acc[name] = value;
@@ -26,7 +25,6 @@ function Page() {
   const [loadingRecent, setLoadingRecent] = useState(true);
 
   useEffect(() => {
-    // لو تحب تحفظ اسم المستخدم في الكوكيز بدل localStorage، ممكن تعدل هنا
     const name = localStorage.getItem("userName");
     if (name) {
       setUserName(name);

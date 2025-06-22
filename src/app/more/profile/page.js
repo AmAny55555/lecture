@@ -14,7 +14,6 @@ const profileSchema = z.object({
   parentNumber: z.string().min(5).max(15),
 });
 
-// دالة للحصول على قيمة الكوكيز
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -22,7 +21,6 @@ function getCookie(name) {
   return "";
 }
 
-// سبينر بسيط
 function Spinner() {
   return (
     <div className="flex justify-center mt-2">

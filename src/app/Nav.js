@@ -15,7 +15,6 @@ function Nav() {
     }
   }, [setUserName]);
 
-  // المسارات التي نريد إخفاء النافبار فيها
   const hiddenRoutes = [
     "/login",
     "/rejester",
@@ -31,7 +30,6 @@ function Nav() {
     "/subject/Math",
   ];
 
-  // إخفاء النافبار في المسارات التي تحتوي على هذه الكلمات المفتاحية ضمن /subject/
   const shouldHideNavbar =
     hiddenRoutes.includes(pathname) ||
     (pathname.startsWith("/subject/") &&

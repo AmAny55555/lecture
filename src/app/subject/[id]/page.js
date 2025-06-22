@@ -6,9 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Spinner from "@/app/components/Spinner";
 
-// دالة استخراج التوكين من الكوكيز
 function getTokenFromCookies() {
-  const cookieString = document.cookie; // "token=abc123; other=value"
+  const cookieString = document.cookie;
   const cookies = cookieString.split("; ").reduce((acc, current) => {
     const [name, value] = current.split("=");
     acc[name] = value;

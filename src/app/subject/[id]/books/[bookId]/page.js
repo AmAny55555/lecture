@@ -52,7 +52,7 @@ export default function BookLinksPage() {
           setLinks([]);
           setError("لا يوجد بيانات");
         } else {
-          setLinks(json.data?.links || []); // نفترض أن الحقل اسمه links
+          setLinks(json.data?.links || []);
         }
       } catch (e) {
         console.error(e);

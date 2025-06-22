@@ -171,12 +171,10 @@ export default function QrLectureVideoPage() {
               <p className="text-center text-[#bf9916]">لا يوجد فيديو</p>
             )}
 
-            {/* العنوان تحت الفيديو */}
             <h2 className="text-xl font-bold text-[#bf9916] mb-6">
               {lecture.name}
             </h2>
 
-            {/* input + السهم على الشمال */}
             <div className="mb-6 flex flex-row-reverse items-center gap-2">
               <div className="relative flex-grow">
                 <FaRegCommentDots className="absolute right-3 top-3 text-[#bf9916]" />
@@ -201,7 +199,6 @@ export default function QrLectureVideoPage() {
 
             {error && <p className="text-[#bf9916] mt-2">{error}</p>}
 
-            {/* التعليقات */}
             <div className="mb-4">
               <h3 className="text-2xl font-medium mb-4 text-[#bf9916]">
                 التعليقات

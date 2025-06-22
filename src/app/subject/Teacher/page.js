@@ -6,7 +6,6 @@ import Image from "next/image";
 import Rate from "@/app/(Main)/Rate";
 import Link from "next/link";
 
-// دالة لقراءة الكوكيز
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -28,7 +27,7 @@ function Page() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getCookie("token"); // هنا قراء التوكين من الكوكيز
+    const token = getCookie("token");
 
     const fetchTeachers = async () => {
       try {

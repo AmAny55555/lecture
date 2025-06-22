@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 function getTokenFromCookies() {
-  const cookieString = document.cookie; // string مثل: "token=abc123; other=val"
+  const cookieString = document.cookie;
   const cookies = cookieString.split("; ").reduce((acc, current) => {
     const [name, value] = current.split("=");
     acc[name] = value;
