@@ -175,12 +175,10 @@ export default function LectureVideoPage() {
               {lecture.name}
             </h2>
 
-            <div
-              className="mb-6 flex flex-row-reverse items-center gap-2"
-              dir="rtl"
-            >
+            {/* حقل التعليق وزر الإرسال */}
+            <div className="mb-6 flex items-center gap-2" dir="rtl">
               <div className="relative flex-grow">
-                <FaRegCommentDots className="absolute right-3 top-3 text-[#bf9916]" />
+                <FaRegCommentDots className="absolute right-3 top-3 text-black" />
                 <input
                   type="text"
                   className="w-full pr-10 pl-4 py-2 border border-purple-500 rounded-lg focus:outline-none text-sm placeholder:text-right placeholder:text-gray-500"
@@ -196,12 +194,13 @@ export default function LectureVideoPage() {
                 className="text-[#bf9916] text-xl p-2 hover:text-[#a77f14] transition"
                 title="إرسال"
               >
-                <FiSend />
+                <FiSend className="text-[#bf9916]" />
               </button>
             </div>
 
             {error && <p className="text-[#bf9916] mt-2">{error}</p>}
 
+            {/* قائمة التعليقات */}
             <div className="mb-4">
               <h3 className="text-2xl font-medium mb-4 text-[#bf9916]">
                 التعليقات

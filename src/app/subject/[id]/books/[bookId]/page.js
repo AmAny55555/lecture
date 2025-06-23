@@ -68,12 +68,16 @@ export default function BookLinksPage() {
 
   return (
     <div className="min-h-screen p-4 bg-gray-50" dir="rtl" lang="ar">
-      <button
-        onClick={() => router.back()}
-        className="mb-4 text-[#bf9916] font-bold text-lg"
-      >
-        &#8592; رجوع
-      </button>
+      {/* زر الرجوع ثابت أعلى اليمين */}
+      <div className="flex justify-end fixed top-4 right-4 z-10">
+        <button
+          onClick={() => router.back()}
+          className="text-[#bf9916] text-2xl hover:text-[#a77f14] transition"
+          title="رجوع"
+        >
+          &#8592;
+        </button>
+      </div>
 
       <h1 className="text-2xl font-bold mb-6 text-[#bf9916]">عناوين الكتاب</h1>
 
@@ -99,7 +103,9 @@ export default function BookLinksPage() {
               {linkItem.description && (
                 <p className="text-gray-700 text-sm">{linkItem.description}</p>
               )}
-              <p className="text-blue-600 underline mt-1">اضغط لفتح الرابط</p>
+              <p className="text-blue-600 underline mt-1 cursor-pointer">
+                اضغط لفتح الرابط
+              </p>
             </li>
           ))}
         </ul>

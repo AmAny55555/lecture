@@ -1,7 +1,9 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
+import { FiArrowRight } from "react-icons/fi";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -64,15 +66,19 @@ export default function HomeworkGroupPage() {
 
   return (
     <div className="min-h-screen p-4 bg-gray-50" dir="rtl">
-      <button
-        onClick={() => router.back()}
-        className="text-[#bf9916] text-3xl mb-4"
-      >
-        &#8594;
-      </button>
+      {/* زر الرجوع */}
+      <div className="flex justify-end mb-4 fixed top-4 right-4 sm:right-8 z-10">
+        <button
+          onClick={() => router.back()}
+          className="text-[#bf9916] text-2xl hover:text-[#a77f14] transition"
+          title="رجوع"
+        >
+          <FiArrowRight />
+        </button>
+      </div>
 
       <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
-        واجبات - <span className="text-[#bf9916]">{groupData.name}</span>
+        الواجبات - <span>{groupData.name}</span>
       </h1>
 
       <div className="flex flex-col gap-4">
@@ -84,7 +90,7 @@ export default function HomeworkGroupPage() {
                 `/subject/${subjectId}/homework/${groupId}/video/${hw.id}?subjectTeacherId=${subjectTeacherId}`
               )
             }
-            className="bg-white shadow-md rounded p-10 text-[#bf9916] font-semibold text-xl text-right"
+            className="bg-white shadow-md rounded p-6 text-[#bf9916] font-semibold text-lg text-right hover:bg-[#fdf8ee] transition"
           >
             {hw.name}
           </button>

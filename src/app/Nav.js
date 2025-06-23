@@ -1,19 +1,29 @@
 "use client";
-import React, { useEffect } from "react";
+
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser } from "./context/UserContext";
 
 function Nav() {
   const pathname = usePathname();
-  const { userName, setUserName } = useUser();
+  const { userName: contextUserName, setUserName } = useUser();
+
+  const [hydrated, setHydrated] = useState(false);
+  const [userName, setLocalUserName] = useState("");
 
   useEffect(() => {
-    const storedName = localStorage.getItem("userName");
-    if (storedName) {
-      setUserName(storedName);
+    setHydrated(true);
+
+    // لو الـ Context فاضي، نحاول نجيب الاسم من localStorage
+    if (!contextUserName) {
+      const storedName = localStorage.getItem("userName") || "";
+      setLocalUserName(storedName);
+      if (storedName) setUserName(storedName);
+    } else {
+      setLocalUserName(contextUserName);
     }
-  }, [setUserName]);
+  }, [contextUserName, setUserName]);
 
   const hiddenRoutes = [
     "/login",
@@ -31,14 +41,11 @@ function Nav() {
   ];
 
   const shouldHideNavbar =
-    hiddenRoutes.includes(pathname) ||
-    (pathname.startsWith("/subject/") &&
-      (pathname.includes("/details") ||
-        pathname.includes("/lecture/") ||
-        pathname.includes("/qrlecture/") ||
-        pathname.includes("/homework/")));
+    hiddenRoutes.includes(pathname) || pathname.startsWith("/subject/");
 
   if (shouldHideNavbar) return null;
+
+  if (!hydrated) return null; // منع hydration mismatch
 
   return (
     <div>

@@ -38,7 +38,6 @@ function Page() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
-
   useEffect(() => {
     const storedToken = localStorage.getItem("token") || "";
     setToken(storedToken);
@@ -47,20 +46,30 @@ function Page() {
     if (storedBalance) setBalance(parseFloat(storedBalance));
 
     if (storedToken) {
+      console.log("🔑 عندي توكن:", storedToken); // هنا تأكد انه في توكن
+
       fetch("https://eng-mohamedkhalf.shop/api/Users/GetUserInfo", {
         headers: {
           Authorization: `Bearer ${storedToken}`,
         },
       })
-        .then((res) => res.json())
+        .then((res) => {
+          console.log("🔄 استجابة ال API:", res);
+          return res.json();
+        })
         .then((data) => {
+          console.log("📦 بيانات المستخدم:", data);
           if (data && data.data && data.errorCode === 0) {
             setPhoneNumber(data.data.phoneNumber);
           }
           setLoading(false);
         })
-        .catch(() => setLoading(false));
+        .catch((err) => {
+          console.error("❌ خطأ في جلب بيانات المستخدم:", err);
+          setLoading(false);
+        });
     } else {
+      console.log("🚫 مفيش توكن مخزن");
       setLoading(false);
     }
   }, []);
@@ -261,6 +270,21 @@ function Page() {
     setShowChargeBox(false);
   };
 
+  useEffect(() => {
+    const updateBalance = () => {
+      const newBalance = localStorage.getItem("wallet_balance");
+      if (newBalance) {
+        setBalance(parseFloat(newBalance));
+      }
+    };
+
+    window.addEventListener("focus", updateBalance);
+
+    return () => {
+      window.removeEventListener("focus", updateBalance);
+    };
+  }, []);
+
   return (
     <div className="p-4 max-w-full" dir="rtl">
       <div className="relative mt-2 mb-6">
@@ -455,7 +479,7 @@ function Page() {
                       autoPlay
                       playsInline
                       muted
-                      width={window.innerWidth > 600 ? 400 : 300} // مثلاً
+                      width={window.innerWidth > 600 ? 400 : 300}
                       height={300}
                       className="w-full rounded"
                       style={{ backgroundColor: "black" }}

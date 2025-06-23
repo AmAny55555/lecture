@@ -177,7 +177,7 @@ export default function QrLectureVideoPage() {
 
             <div className="mb-6 flex flex-row-reverse items-center gap-2">
               <div className="relative flex-grow">
-                <FaRegCommentDots className="absolute right-3 top-3 text-[#bf9916]" />
+                <FaRegCommentDots className="absolute right-3 top-3 text-black" />
                 <input
                   type="text"
                   className="w-full pr-10 pl-4 py-2 border border-purple-500 rounded-lg focus:outline-none text-sm placeholder:text-right placeholder:text-gray-500"

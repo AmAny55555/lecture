@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Spinner from "@/app/components/Spinner";
+import { FaVideo, FaBook } from "react-icons/fa";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -151,13 +152,24 @@ function Page() {
         </p>
 
         <div className="flex gap-10">
-          <div className="flex flex-col items-center">
-            <span>{bookCount}</span>
-            <p>الكتب</p>
+          <div className="flex flex-col items-center rounded-full px-6 py-3 w-[80px]">
+            <div className="bg-green-300 rounded-full p-3">
+              <FaVideo className="text-green-400 text-3xl mb-1" />
+            </div>
+            <span className="text-green-600 font-bold text-2xl">
+              {lectureCount}
+            </span>
+            <p className="text-gray-700 text-sm mt-1">المحاضرات</p>
           </div>
-          <div className="flex flex-col items-center">
-            <span>{lectureCount}</span>
-            <p>المحاضرات</p>
+          <div className="flex flex-col items-center  rounded-full px-6 py-3 w-[80px]">
+            <div className="bg-amber-200 rounded-full p-3">
+              {" "}
+              <FaBook className="text-orange-400 text-3xl mb-1" />
+            </div>
+            <span className="text-orange-500 font-bold text-2xl">
+              {bookCount}
+            </span>
+            <p className="text-gray-700 text-sm mt-1">الكتب</p>
           </div>
         </div>
       </div>

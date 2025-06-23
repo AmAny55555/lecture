@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
 import Link from "next/link";
+import { FiArrowRight } from "react-icons/fi";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -71,13 +72,15 @@ export default function QrLectureGroupPage() {
 
   return (
     <div className="min-h-screen p-4 bg-gray-50" dir="rtl">
-      <button
-        onClick={() => router.back()}
-        className="text-[#bf9916] text-3xl mb-4"
-        title="رجوع"
-      >
-        &#8592;
-      </button>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => router.back()}
+          className="text-[#bf9916] text-2xl hover:text-[#a77f14] transition"
+          title="رجوع"
+        >
+          <FiArrowRight />
+        </button>
+      </div>
 
       <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
         محاضرات QR - <span>{groupData.name}</span>

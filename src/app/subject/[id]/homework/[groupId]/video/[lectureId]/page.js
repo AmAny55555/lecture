@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
@@ -143,6 +144,7 @@ export default function HomeworkVideoPage() {
 
   return (
     <div>
+      {/* زر الرجوع */}
       <div className="flex justify-end mb-4 fixed top-4 right-4 sm:right-8 z-10">
         <button
           onClick={() => history.back()}
@@ -153,7 +155,7 @@ export default function HomeworkVideoPage() {
         </button>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-6 text-right">
+      <div className="max-w-3xl mx-auto px-4 py-6 text-right" dir="rtl">
         {lecture ? (
           <>
             {videoEmbedUrl ? (
@@ -173,12 +175,10 @@ export default function HomeworkVideoPage() {
               {lecture.name}
             </h2>
 
-            <div
-              className="mb-6 flex flex-row-reverse items-center gap-2"
-              dir="rtl"
-            >
+            {/* التعليق وزر الإرسال */}
+            <div className="mb-6 flex flex-row-reverse items-center gap-2">
               <div className="relative flex-grow">
-                <FaRegCommentDots className="absolute right-3 top-3 text-[#bf9916]" />
+                <FaRegCommentDots className="absolute right-3 top-3 text-black" />
                 <input
                   type="text"
                   className="w-full pr-10 pl-4 py-2 border border-purple-500 rounded-lg focus:outline-none text-sm placeholder:text-right placeholder:text-gray-500"

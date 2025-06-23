@@ -21,6 +21,7 @@ function Page() {
   const [subStages, setSubStages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [checking, setChecking] = useState(true);
 
   const {
     register,
@@ -28,7 +29,6 @@ function Page() {
     formState: { errors },
   } = useForm();
 
-  // اقرأ الاختيار المحفوظ لو موجود
   useEffect(() => {
     const savedType = localStorage.getItem("educationType");
     if (savedType) setSelected(savedType);
@@ -37,8 +37,13 @@ function Page() {
   useEffect(() => {
     const checkStudentData = async () => {
       try {
+        console.log("🔁 CheckStudentData – بدء التحقق");
         const token = getTokenFromCookies();
-        if (!token) return;
+        if (!token) {
+          console.log("🔐 لا يوجد توكن → السماح برؤية الصفحة");
+          setChecking(false);
+          return;
+        }
 
         const res = await fetch(
           "https://eng-mohamedkhalf.shop/api/Students/CheckStudentData",
@@ -53,12 +58,18 @@ function Page() {
         );
 
         const result = await res.json();
+        console.log("📦 CheckStudentData response:", result);
 
-        if (result?.data === true) {
+        if (result?.data === true || result?.data?.isProfileComplete) {
+          console.log("✅ البيانات مكتملة → التوجيه إلى /main");
           router.replace("/main");
+        } else {
+          console.log("⚠️ البيانات ناقصة → إظهار صفحة more-info");
+          setChecking(false);
         }
       } catch (error) {
-        console.error("❌ Error checking student data:", error);
+        console.error("❌ خطأ خلال التحقق:", error);
+        setChecking(false);
       }
     };
 
@@ -70,7 +81,6 @@ function Page() {
       try {
         const token = getTokenFromCookies();
         if (!token) return;
-
         const res = await fetch(
           "https://eng-mohamedkhalf.shop/api/EducationalStages/GetEducationalStages",
           {
@@ -96,7 +106,6 @@ function Page() {
       try {
         const token = getTokenFromCookies();
         if (!token) return;
-
         const res = await fetch(
           "https://eng-mohamedkhalf.shop/api/SubEducationalStages/GetSubEducationalStages/1",
           {
@@ -152,7 +161,6 @@ function Page() {
     setTimeout(() => setErrorMessage(""), 3000);
   };
 
-  // لما المستخدم يختار نوع المدرسة، خزنه في ال state وكمان في localStorage
   const handleSelect = (type) => {
     setSelected(type);
     localStorage.setItem("educationType", type);
@@ -189,12 +197,14 @@ function Page() {
     }
   };
 
+  if (checking) return null;
+
   return (
     <div className="px-4 pt-10">
       <h1 className="text-2xl font-bold mb-2 text-right md:px-20">
         ! يجب اكمال البيانات
       </h1>
-      <p className="text-sm text-right text-gray-500 mb-6  sm:px-15 md:px-20">
+      <p className="text-sm text-right text-gray-500 mb-6 sm:px-15 md:px-20">
         ...قم باكمال بيانات حسابك واستمتع بالتعلم
       </p>
 
@@ -249,9 +259,6 @@ function Page() {
               </option>
             ))}
           </select>
-          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-            ▼
-          </div>
           {errors.educationalStageId && (
             <p className="text-red-500 text-sm mt-1">
               {errors.educationalStageId.message}
@@ -276,9 +283,6 @@ function Page() {
               </option>
             ))}
           </select>
-          <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-            ▼
-          </div>
           {errors.subEducationalStageId && (
             <p className="text-red-500 text-sm mt-1">
               {errors.subEducationalStageId.message}

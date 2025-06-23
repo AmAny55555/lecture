@@ -97,6 +97,7 @@ function RegisterPage() {
       );
 
       const result = await res.json();
+      console.log("Register response:", result);
 
       if (result.errorCode !== 0) {
         setErrorMessage(result.errorMessage || "فشل في إنشاء الحساب");
@@ -105,9 +106,10 @@ function RegisterPage() {
 
       setSuccessMessage("تم إنشاء الحساب بنجاح ✅");
 
+      // ✅ تحويل المستخدم إلى صفحة تسجيل الدخول
       setTimeout(() => {
         router.push("/");
-      }, 1000);
+      }, 1500);
     } catch (err) {
       setErrorMessage(err.message || "حدث خطأ أثناء رفع البيانات");
     }

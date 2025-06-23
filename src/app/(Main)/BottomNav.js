@@ -10,7 +10,7 @@ function BottomNav({ isModalOpen = false }) {
 
   const pathname = usePathname();
 
-  // قائمة المسارات اللي عايزين نخفي فيها BottomNav
+  // اخفاء BottomNav لأي مسار يبدأ بـ /subject/
   if (
     pathname.includes("/login") ||
     pathname.includes("/rejester") ||
@@ -24,11 +24,7 @@ function BottomNav({ isModalOpen = false }) {
     pathname.includes("/subject/Teacher") ||
     pathname.includes("/subject/subject2") ||
     pathname.includes("/subject/Math") ||
-    (pathname.includes("/subject/") &&
-      (pathname.includes("/details") ||
-        pathname.includes("/lecture/") ||
-        pathname.includes("/qrlecture/") ||
-        pathname.includes("/homework/")))
+    pathname.startsWith("/subject/") // <= هنا التعديل
   ) {
     return null;
   }
@@ -52,7 +48,7 @@ function BottomNav({ isModalOpen = false }) {
     {
       icon: <i className="fa-solid fa-th" />,
       label: "الدورات",
-      href: "/login",
+      href: "/courses",
     },
     {
       icon: <i className="fa-solid fa-ellipsis" />,

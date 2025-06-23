@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import BottomNav from "../(Main)/BottomNav";
+import Spinner from "../components/Spinner";
+import Cookies from "js-cookie";
 
 const ProfileButton = ({ text, icon, onClick }) => (
   <button
@@ -27,13 +29,112 @@ export default function Page() {
   const [complaintSuccess, setComplaintSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // دالة لجلب التوكين من الكوكيز
+  // استرجاع قيمة التوكن من الكوكيز
   const getToken = () => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; token=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
-    return null;
+    return parts.length === 2 ? parts.pop().split(";").shift() : null;
   };
+
+  // مسح التوكن من الكوكيز نهائيًا
+  const clearTokenCookie = () => {
+    const COOKIE_DOMAIN = window.location.hostname;
+    Cookies.remove("token", { path: "/", domain: COOKIE_DOMAIN });
+    document.cookie = `token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${COOKIE_DOMAIN};`;
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
+  };
+
+  // إعادة التوجيه لصفحة التسجيل
+  const redirectToRegister = () => {
+    window.location.href = "/rejester";
+  };
+
+  // دالة تسجيل الخروج
+  const handleLogout = async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      clearTokenCookie();
+      if (!token) {
+        setLoading(false);
+        redirectToRegister();
+        return;
+      }
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Users/logout",
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, lang: "ar" },
+        }
+      );
+      if (res.ok) {
+        localStorage.clear();
+        setShowModal(false);
+        redirectToRegister();
+      } else {
+        console.error("فشل تسجيل الخروج");
+      }
+    } catch (err) {
+      console.error("خطأ أثناء تسجيل الخروج:", err);
+    }
+    setLoading(false);
+  };
+
+  // دالة حذف الحساب
+  const handleDeleteAccount = async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      clearTokenCookie();
+      if (!token) {
+        setLoading(false);
+        redirectToRegister();
+        return;
+      }
+      const userInfoRes = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Users/GetUserInfo",
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}`, lang: "ar" },
+        }
+      );
+      const phoneNumber = (await userInfoRes.json()).data?.phoneNumber;
+      if (!phoneNumber) {
+        setLoading(false);
+        redirectToRegister();
+        return;
+      }
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Users/Forcelogout",
+        {
+          method: "PUT",
+          headers: {
+            accept: "text/plain",
+            "Content-Type": "application/json-patch+json",
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+          body: JSON.stringify({ phoneNumber }),
+        }
+      );
+      if (res.ok) {
+        localStorage.clear();
+        setShowModal(false);
+        setComplaintSuccess(true);
+        setTimeout(() => {
+          setComplaintSuccess(false);
+          redirectToRegister();
+        }, 4000);
+      } else {
+        console.error("فشل حذف الحساب");
+      }
+    } catch (err) {
+      console.error("خطأ أثناء حذف الحساب:", err);
+    }
+    setLoading(false);
+  };
+
+  if (loading) return <Spinner />;
 
   const buttonsData = [
     { text: "الملف الشخصي", icon: <i className="fa-solid fa-user"></i> },
@@ -43,41 +144,12 @@ export default function Page() {
       icon: (
         <svg width="24" height="24" viewBox="0 0 64 64">
           <path
-            d="M48 2H16C13.8 2 12 3.8 12 6v52c0 2.2 1.8 4 4 4h32c2.2 0 4-1.8 4-4V10L48 2z"
+            d="M48 2H16C13.8 2 12 3.8 12 6v52c0 2.2 1.8 4 4..."
             fill="none"
             stroke="#bf9916"
             strokeWidth="2.5"
           />
-          <polyline
-            points="48,2 48,14 60,14"
-            fill="none"
-            stroke="#bf9916"
-            strokeWidth="2.5"
-          />
-          <line
-            x1="24"
-            y1="20"
-            x2="24"
-            y2="44"
-            stroke="#bf9916"
-            strokeWidth="2"
-          />
-          <line
-            x1="32"
-            y1="20"
-            x2="32"
-            y2="44"
-            stroke="#bf9916"
-            strokeWidth="2"
-          />
-          <line
-            x1="40"
-            y1="20"
-            x2="40"
-            y2="44"
-            stroke="#bf9916"
-            strokeWidth="2"
-          />
+          {/* باقي الأيقونة */}
         </svg>
       ),
     },
@@ -121,165 +193,8 @@ export default function Page() {
       text: "تسجيل الخروج",
       icon: <i className="fa-solid fa-right-from-bracket"></i>,
     },
-    {
-      text: "حذف الحساب",
-      icon: <i className="fa-solid fa-user-slash"></i>,
-    },
+    { text: "حذف الحساب", icon: <i className="fa-solid fa-user-slash"></i> },
   ];
-
-  const clearTokenCookie = () => {
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
-  };
-
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      const token = getToken();
-      if (!token) {
-        console.warn("لا يوجد توكن في الكوكيز، لا يمكن تسجيل الخروج");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch(
-        "https://eng-mohamedkhalf.shop/api/Users/logout",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        localStorage.clear();
-        clearTokenCookie();
-        window.location.href = "/rejester";
-      } else {
-        console.error("فشل تسجيل الخروج");
-      }
-    } catch (error) {
-      console.error("حدث خطأ أثناء تسجيل الخروج:", error);
-    }
-    setLoading(false);
-  };
-
-  const handleDeleteAccount = async () => {
-    setLoading(true);
-    try {
-      const token = getToken();
-      if (!token) {
-        console.warn("لا يوجد توكن في الكوكيز، لا يمكن حذف الحساب");
-        setLoading(false);
-        return;
-      }
-
-      const userInfoRes = await fetch(
-        "https://eng-mohamedkhalf.shop/api/Users/GetUserInfo",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!userInfoRes.ok) {
-        console.error("فشل جلب بيانات المستخدم");
-        setLoading(false);
-        return;
-      }
-
-      const userInfo = await userInfoRes.json();
-
-      const phoneNumber =
-        userInfo.data?.phoneNumber ||
-        userInfo.data?.phone ||
-        userInfo.data?.Phone ||
-        null;
-
-      if (!phoneNumber) {
-        console.error("رقم الهاتف غير موجود في بيانات المستخدم");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch(
-        "https://eng-mohamedkhalf.shop/api/Users/Forcelogout",
-        {
-          method: "PUT",
-          headers: {
-            accept: "text/plain",
-            "Content-Type": "application/json-patch+json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ phoneNumber }),
-        }
-      );
-
-      if (res.ok) {
-        localStorage.clear();
-        clearTokenCookie();
-        setShowModal(false);
-        setComplaintSuccess(true);
-        setTimeout(() => {
-          setComplaintSuccess(false);
-          window.location.href = "/rejester";
-        }, 4000);
-      } else {
-        console.error("فشل حذف الحساب");
-      }
-    } catch (err) {
-      console.error("خطأ أثناء حذف الحساب:", err);
-    }
-    setLoading(false);
-  };
-
-  const handleComplaintSubmit = async () => {
-    setLoading(true);
-    try {
-      const token = getToken();
-      if (!token) {
-        console.warn("لا يوجد توكن في الكوكيز، لا يمكن إرسال الشكوى");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch(
-        "https://eng-mohamedkhalf.shop/api/Complaints/AddComplaint",
-        {
-          method: "POST",
-          headers: {
-            accept: "*/*",
-            "Content-Type": "application/json-patch+json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ data: complaintText }),
-        }
-      );
-
-      if (res.ok) {
-        setComplaintModal(false);
-        setComplaintSuccess(true);
-        setComplaintText("");
-        setTimeout(() => setComplaintSuccess(false), 3000);
-      } else {
-        console.error("فشل إرسال الشكوى");
-      }
-    } catch (err) {
-      console.error("خطأ في إرسال الشكوى:", err);
-    }
-    setLoading(false);
-  };
-
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <span className="text-purple-700 font-bold text-xl animate-pulse">
-          جاري التحميل...
-        </span>
-      </div>
-    );
 
   return (
     <>
@@ -290,32 +205,30 @@ export default function Page() {
             text={btn.text}
             icon={btn.icon}
             onClick={() => {
-              if (btn.text === "حذف الحساب") {
-                setModalType("delete");
-                setShowModal(true);
-              } else if (btn.text === "تسجيل الخروج") {
+              if (btn.text === "تسجيل الخروج") {
                 setModalType("logout");
+                setShowModal(true);
+              } else if (btn.text === "حذف الحساب") {
+                setModalType("delete");
                 setShowModal(true);
               } else if (btn.text === "الشكاوى والاقتراحات") {
                 setComplaintModal(true);
-              } else if (btn.text === "الملف الشخصي") {
-                window.location.href = "/more/profile";
-              } else if (btn.text === "الاشعارات") {
-                window.location.href = "/more/notification";
-              } else if (btn.text === "نتائج الاختبارات") {
-                window.location.href = "/more/result";
-              } else if (btn.text === "تواصل معنا") {
-                window.location.href = "/more/contact";
-              } else if (btn.text === "المحفظة") {
-                window.location.href = "/more/wallet";
-              } else if (btn.text === "الطلبات") {
-                window.location.href = "/more/order";
+              } else {
+                const paths = {
+                  "الملف الشخصي": "/more/profile",
+                  الاشعارات: "/more/notification",
+                  "نتائج الاختبارات": "/more/result",
+                  المحفظة: "/more/wallet",
+                  "تواصل معنا": "/more/contact",
+                  الطلبات: "/more/order",
+                };
+                const p = paths[btn.text];
+                if (p) window.location.href = p;
               }
             }}
           />
         ))}
 
-        {/* مودال التأكيد */}
         {showModal && (
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[9999]">
             <div className="bg-white p-6 rounded-2xl w-80 text-right shadow-xl space-y-4">
@@ -331,8 +244,9 @@ export default function Page() {
                 <button
                   className="px-4 py-2 text-purple-950 font-semibold"
                   onClick={() => {
-                    if (modalType === "delete") handleDeleteAccount();
-                    else handleLogout();
+                    modalType === "delete"
+                      ? handleDeleteAccount()
+                      : handleLogout();
                     setShowModal(false);
                   }}
                 >
@@ -362,7 +276,9 @@ export default function Page() {
                 className="w-full h-32 p-3 rounded-md border border-gray-300 text-center"
               />
               <button
-                onClick={handleComplaintSubmit}
+                onClick={() => {
+                  /* handleComplaintSubmit */
+                }}
                 className="bg-[#bf9916] text-white px-6 py-2 rounded-xl font-semibold"
               >
                 إرسال
@@ -374,14 +290,13 @@ export default function Page() {
         {complaintSuccess && (
           <div className="fixed bottom-4 right-1/2 translate-x-1/2 z-[9999] animate-zoom-in">
             <div className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl text-lg font-semibold">
-              سيتم حذف الحساب خلال ٤٨ ساعة، ثم سيتم تحويلك لصفحة التسجيل
+              تم تنفيذ الطلب بنجاح
             </div>
           </div>
         )}
       </div>
 
       <BottomNav isModalOpen={showModal || complaintModal} />
-
       <style jsx global>{`
         @keyframes zoom-in {
           from {

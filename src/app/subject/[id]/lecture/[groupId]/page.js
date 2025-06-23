@@ -28,9 +28,23 @@ export default function LectureGroupPage() {
   const [selectedLectureId, setSelectedLectureId] = useState(null);
   const [subscribing, setSubscribing] = useState(false);
   const [message, setMessage] = useState("");
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [subscribedGroups, setSubscribedGroups] = useState([]);
+  const [paidMessage, setPaidMessage] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [feedbackColor, setFeedbackColor] = useState("");
 
   useEffect(() => {
     setToken(getTokenFromCookies());
+    const localBalance = parseFloat(
+      localStorage.getItem("wallet_balance") || "0"
+    );
+    setWalletBalance(localBalance);
+
+    const groups = JSON.parse(
+      localStorage.getItem("subscribed_groups") || "[]"
+    );
+    setSubscribedGroups(groups);
   }, []);
 
   useEffect(() => {
@@ -63,38 +77,55 @@ export default function LectureGroupPage() {
     fetchData();
   }, [token, subjectTeacherId, groupId]);
 
-  const handleSubscribe = async () => {
-    if (!token || !selectedLectureId) return;
-    setSubscribing(true);
-    setMessage("");
-    try {
-      const res = await fetch(
-        `https://eng-mohamedkhalf.shop/api/OnlineLectures/SubscribeToLecture/${selectedLectureId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            lang: "ar",
-          },
-        }
+  const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
+
+  const handleLectureClick = (lectureId) => {
+    if (isGroupSubscribed) {
+      router.push(
+        `/subject/${subjectId}/lecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
       );
-      const json = await res.json();
-      if (json.errorCode === 0) {
-        setMessage("تم فتح المحاضرة");
-        setTimeout(() => {
-          setShowModal(false);
-          router.push(
-            `/subject/${subjectId}/lecture/${groupId}/video/${selectedLectureId}?subjectTeacherId=${subjectTeacherId}`
-          );
-        }, 1000);
-      } else {
-        setMessage("الرصيد غير كاف");
-      }
-    } catch (err) {
-      setMessage("حدث خطأ");
-    } finally {
-      setSubscribing(false);
+    } else {
+      setSelectedLectureId(lectureId);
+      setShowModal(true);
+      setMessage("");
+    }
+  };
+
+  const handleSubscribeGroup = () => {
+    setPaidMessage("باستخدام المحفظة");
+    // المودال يظل ظاهر والخلفية موجودة
+  };
+
+  const handleConfirmPayment = () => {
+    const price = groupData?.price || 0;
+    setPaidMessage(""); // إخفاء الرسالة
+    setShowModal(false); // إخفاء المودال
+
+    if (walletBalance >= price) {
+      const newBalance = walletBalance - price;
+      localStorage.setItem("wallet_balance", newBalance.toFixed(2));
+      setWalletBalance(newBalance);
+
+      const updatedGroups = [...subscribedGroups, groupId.toString()];
+      localStorage.setItem("subscribed_groups", JSON.stringify(updatedGroups));
+      setSubscribedGroups(updatedGroups);
+
+      setFeedbackMessage("تم فتح المحاضرة للطالب");
+      setFeedbackColor("bg-green-600");
+
+      setTimeout(() => {
+        setFeedbackMessage(null);
+        router.push(
+          `/subject/${subjectId}/lecture/${groupId}/video/${selectedLectureId}?subjectTeacherId=${subjectTeacherId}`
+        );
+      }, 2000);
+    } else {
+      setFeedbackMessage("الرصيد غير كافى");
+      setFeedbackColor("bg-red-600");
+
+      setTimeout(() => {
+        setFeedbackMessage(null);
+      }, 2000);
     }
   };
 
@@ -119,11 +150,7 @@ export default function LectureGroupPage() {
         {groupData.onlineLectures?.map((lecture) => (
           <button
             key={lecture.id}
-            onClick={() => {
-              setSelectedLectureId(lecture.id);
-              setShowModal(true);
-              setMessage("");
-            }}
+            onClick={() => handleLectureClick(lecture.id)}
             className="bg-white shadow-md rounded p-10 text-[#bf9916] font-semibold text-xl text-right"
           >
             {lecture.name}
@@ -137,26 +164,51 @@ export default function LectureGroupPage() {
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-lg w-11/12 max-w-md text-center"
+            className="bg-white p-6 rounded-4xl w-11/12 max-w-sm text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold mb-2 text-[#bf9916]">اشتراك</h2>
-            <p className="mb-4">يجب الاشتراك في المحاضرة أولاً</p>
-            <button
-              onClick={handleSubscribe}
-              disabled={subscribing}
-              className="bg-[#bf9916] text-white px-4 py-2 rounded mb-2 w-full"
-            >
-              باستخدام المحفظة
-            </button>
-            {message && <p className="text-sm text-gray-700 mt-2">{message}</p>}
-            <button
-              onClick={() => setShowModal(false)}
-              className="mt-4 text-red-500 underline"
-            >
-              إلغاء
-            </button>
+            <div className="text-right">
+              <h2 className="text-xl font-bold mb-3">اشتراك</h2>
+              <p className="mb-4">يجب الاشتراك في المحاضرة أولاً</p>
+            </div>
+            <div className="flex items-center justify-end gap-4 mt-4">
+              <button
+                onClick={handleSubscribeGroup}
+                disabled={subscribing}
+                className="text-purple-600 px-4 py-2"
+              >
+                اشتراك
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-purple-600"
+              >
+                إلغاء
+              </button>
+              {message && (
+                <p className="text-sm text-gray-700 ml-4">{message}</p>
+              )}
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* ✅ رسالة "باستخدام المحفظة" */}
+      {paidMessage && (
+        <div
+          onClick={handleConfirmPayment}
+          className="cursor-pointer fixed bottom-0 left-0 right-0 bg-white text-[#bf9916] text-center py-4 shadow z-[999]"
+        >
+          {paidMessage}
+        </div>
+      )}
+
+      {/* ✅ رسالة النتيجة المتحركة */}
+      {feedbackMessage && (
+        <div
+          className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 scale-90 animate-pulse text-white px-6 py-3 rounded-xl z-[1000] transition-all duration-500 ${feedbackColor}`}
+        >
+          {feedbackMessage}
         </div>
       )}
     </div>
