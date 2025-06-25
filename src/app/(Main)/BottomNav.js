@@ -48,7 +48,7 @@ function BottomNav({ isModalOpen = false }) {
     {
       icon: <i className="fa-solid fa-th" />,
       label: "الدورات",
-      href: "/courses",
+      href: "/course",
     },
     {
       icon: <i className="fa-solid fa-ellipsis" />,

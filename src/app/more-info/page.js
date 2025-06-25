@@ -19,6 +19,10 @@ function Page() {
   const [selected, setSelected] = useState("");
   const [stages, setStages] = useState([]);
   const [subStages, setSubStages] = useState([]);
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [selectedSubStage, setSelectedSubStage] = useState(null);
+  const [showStageList, setShowStageList] = useState(false);
+  const [showSubStageList, setShowSubStageList] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [checking, setChecking] = useState(true);
@@ -26,6 +30,7 @@ function Page() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -37,10 +42,8 @@ function Page() {
   useEffect(() => {
     const checkStudentData = async () => {
       try {
-        console.log("🔁 CheckStudentData – بدء التحقق");
         const token = getTokenFromCookies();
         if (!token) {
-          console.log("🔐 لا يوجد توكن → السماح برؤية الصفحة");
           setChecking(false);
           return;
         }
@@ -58,17 +61,14 @@ function Page() {
         );
 
         const result = await res.json();
-        console.log("📦 CheckStudentData response:", result);
 
         if (result?.data === true || result?.data?.isProfileComplete) {
-          console.log("✅ البيانات مكتملة → التوجيه إلى /main");
           router.replace("/main");
         } else {
-          console.log("⚠️ البيانات ناقصة → إظهار صفحة more-info");
           setChecking(false);
         }
       } catch (error) {
-        console.error("❌ خطأ خلال التحقق:", error);
+        console.error("Error during check:", error);
         setChecking(false);
       }
     };
@@ -167,15 +167,12 @@ function Page() {
   };
 
   const onSubmit = async (formData) => {
-    const educationalStageId = parseInt(formData.educationalStageId);
-    const subEducationalStageId = parseInt(formData.subEducationalStageId);
-
     if (!selected) {
       showError("من فضلك اختر نوع المدرسة");
       return;
     }
 
-    if (isNaN(educationalStageId) || isNaN(subEducationalStageId)) {
+    if (!selectedStage || !selectedSubStage) {
       showError("تأكد من اختيار المرحلة التعليمية والصف الدراسي");
       return;
     }
@@ -183,8 +180,8 @@ function Page() {
     const fullData = {
       ...formData,
       educationType: selected,
-      educationalStageId,
-      subEducationalStageId,
+      educationalStageId: selectedStage.id,
+      subEducationalStageId: selectedSubStage.id,
     };
 
     const result = await createStudentData(fullData);
@@ -243,22 +240,32 @@ function Page() {
         </div>
 
         <div className="mb-4 relative">
-          <select
-            {...register("educationalStageId", {
-              required: "يجب اختيار المرحلة",
-            })}
-            defaultValue=""
-            className="w-full border rounded-2xl px-4 h-10 text-black bg-white appearance-none pr-10 focus:outline-none"
+          <div
+            onClick={() => setShowStageList(!showStageList)}
+            className="w-full border rounded px-4 h-12 flex items-center justify-between cursor-pointer bg-white"
           >
-            <option value="" disabled hidden>
-              اختر المرحلة التعليمية
-            </option>
-            {stages.map((stage) => (
-              <option key={stage.id} value={stage.id}>
-                {stage.name}
-              </option>
-            ))}
-          </select>
+            <span className="text-gray-700">
+              {selectedStage ? selectedStage.name : "اختر المرحلة التعليمية"}
+            </span>
+            <i className="fa-solid fa-chevron-down text-gray-400"></i>
+          </div>
+          {showStageList && (
+            <div className="absolute w-full max-h-56 overflow-y-auto border mt-1 bg-white rounded shadow z-10">
+              {stages.map((stage) => (
+                <div
+                  key={stage.id}
+                  onClick={() => {
+                    setSelectedStage(stage);
+                    setValue("educationalStageId", stage.id);
+                    setShowStageList(false);
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                >
+                  {stage.name}
+                </div>
+              ))}
+            </div>
+          )}
           {errors.educationalStageId && (
             <p className="text-red-500 text-sm mt-1">
               {errors.educationalStageId.message}
@@ -267,22 +274,32 @@ function Page() {
         </div>
 
         <div className="mb-4 relative">
-          <select
-            {...register("subEducationalStageId", {
-              required: "يجب اختيار الصف الدراسي",
-            })}
-            defaultValue=""
-            className="w-full border rounded-2xl px-4 h-10 text-black bg-white appearance-none pr-10 focus:outline-none"
+          <div
+            onClick={() => setShowSubStageList(!showSubStageList)}
+            className="w-full border rounded px-4 h-12 flex items-center justify-between cursor-pointer bg-white"
           >
-            <option value="" disabled hidden>
-              اختر الصف الدراسي
-            </option>
-            {subStages.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
+            <span className="text-gray-700">
+              {selectedSubStage ? selectedSubStage.name : "اختر الصف الدراسي"}
+            </span>
+            <i className="fa-solid fa-chevron-down text-gray-400"></i>
+          </div>
+          {showSubStageList && (
+            <div className="absolute w-full max-h-56 overflow-y-auto border mt-1 bg-white rounded shadow z-10">
+              {subStages.map((sub) => (
+                <div
+                  key={sub.id}
+                  onClick={() => {
+                    setSelectedSubStage(sub);
+                    setValue("subEducationalStageId", sub.id);
+                    setShowSubStageList(false);
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                >
+                  {sub.name}
+                </div>
+              ))}
+            </div>
+          )}
           {errors.subEducationalStageId && (
             <p className="text-red-500 text-sm mt-1">
               {errors.subEducationalStageId.message}
