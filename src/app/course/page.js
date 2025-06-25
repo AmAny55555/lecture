@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Spinner from "../components/Spinner";
+
+import NoItem from "../NoItem";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -60,7 +61,7 @@ export default function MyPaidLectures() {
 
   if (loading) return <Spinner />;
   if (error) return <p className="text-red-600 font-bold">{error}</p>;
-  if (lectures.length === 0) return <p>لا توجد محاضرات مدفوعة.</p>;
+  if (lectures.length === 0) return <NoItem text=" لا توجد محاضررات مدفوعة" />;
 
   return (
     <div dir="rtl" className="p-4">

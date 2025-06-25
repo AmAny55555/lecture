@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
 import { FiArrowRight } from "react-icons/fi";
-import { useUser } from "@/app/context/UserContext"; // لو بتستخدم الكونتكست
+import { useUser } from "@/app/context/UserContext";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -32,7 +32,6 @@ export default function HomeworkGroupPage() {
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [feedbackColor, setFeedbackColor] = useState("");
 
-  // استخدم الكونتكست لو موجود عندك
   const { money, setMoney, subscribedGroups, addSubscribedGroup } = useUser();
 
   useEffect(() => {
@@ -177,7 +176,6 @@ export default function HomeworkGroupPage() {
         ))}
       </div>
 
-      {/* مودال الاشتراك */}
       {showModal && (
         <div
           className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-50"
@@ -207,7 +205,6 @@ export default function HomeworkGroupPage() {
         </div>
       )}
 
-      {/* رسالة الدفع */}
       {paidMessage && (
         <div
           onClick={handleConfirmPayment}
@@ -217,7 +214,6 @@ export default function HomeworkGroupPage() {
         </div>
       )}
 
-      {/* رسالة الفيدباك */}
       {feedbackMessage && (
         <div
           className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 scale-90 animate-pulse text-white px-6 py-3 rounded-xl z-[1000] transition-all duration-500 ${feedbackColor}`}

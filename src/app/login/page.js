@@ -9,7 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Spinner from "../components/Spinner";
 import Cookies from "js-cookie";
-import { useUser } from "@/app/context/UserContext"; // ✅ تأكد من الاستيراد
+import { useUser } from "@/app/context/UserContext";
 
 const loginSchema = z.object({
   phone: z
@@ -25,7 +25,11 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  const { login } = useUser(); // ✅ لاستخدام login من الكونتكست
+  const { login, logout } = useUser();
+
+  useEffect(() => {
+    logout();
+  }, []);
 
   useEffect(() => {
     async function checkLogin() {
@@ -97,7 +101,7 @@ export default function Login() {
       const fullName = result.data?.fullName;
       const studentId = result.data?.userId;
       const balance = result.data?.walletBalance;
-      const money = result.data?.money; // ✅ الحصول على قيمة المال
+      const money = result.data?.money;
 
       if (token) {
         Cookies.set("token", token, { expires: 7 });
@@ -108,9 +112,8 @@ export default function Login() {
       if (studentId) Cookies.set("studentId", studentId, { expires: 7 });
       if (balance !== undefined)
         localStorage.setItem("wallet_balance", balance);
-      if (money !== undefined) localStorage.setItem("money", money); // ✅ تخزين المال
+      if (money !== undefined) localStorage.setItem("money", money);
 
-      // ✅ تخزين كل البيانات في الكونتكست
       login({
         userName: fullName,
         phoneNumber: data.phone,

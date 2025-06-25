@@ -88,7 +88,7 @@ export default function LectureGroupPage() {
   };
 
   const handleConfirmPayment = async () => {
-    const price = groupData?.price || 0; // سعر الاشتراك من البيانات (مثلاً 50)
+    const price = groupData?.price || 0;
     setPaidMessage("");
     setShowModal(false);
 
@@ -114,10 +114,6 @@ export default function LectureGroupPage() {
           throw new Error("فشل في الدفع");
         }
 
-        // لا نحتاج نقرأ JSON لأن الـ accept: text/plain، ولكن في حال تريد قراءة نص الرد:
-        // const data = await res.text();
-
-        // خصم السعر من الرصيد محلياً (بدون API تحديث)
         const updatedBalance = money - price;
         setMoney(updatedBalance);
         localStorage.setItem("money", updatedBalance);

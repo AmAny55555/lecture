@@ -8,10 +8,9 @@ export function UserProvider({ children }) {
   const [userName, setUserName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
-  const [money, setMoney] = useState(0); // الرصيد
+  const [money, setMoney] = useState(0);
   const [subscribedGroups, setSubscribedGroups] = useState([]);
 
-  // تحميل البيانات من localStorage عند بدء التطبيق
   useEffect(() => {
     const savedMoney = localStorage.getItem("money");
     if (savedMoney !== null) {
@@ -39,7 +38,6 @@ export function UserProvider({ children }) {
     }
   }, []);
 
-  // دالة تسجيل الدخول مع تخزين كل البيانات
   function login({ userName, phoneNumber, token, money }) {
     setUserName(userName || "");
     setPhoneNumber(phoneNumber || "");
@@ -52,7 +50,6 @@ export function UserProvider({ children }) {
     localStorage.setItem("money", money !== undefined ? money.toString() : "0");
   }
 
-  // إضافة مجموعة مشترك فيها
   function addSubscribedGroup(groupId) {
     if (!subscribedGroups.includes(groupId)) {
       const updated = [...subscribedGroups, groupId];
@@ -61,7 +58,6 @@ export function UserProvider({ children }) {
     }
   }
 
-  // دالة لتسجيل الخروج (مثال)
   function logout() {
     setUserName("");
     setPhoneNumber("");
@@ -74,6 +70,9 @@ export function UserProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("money");
     localStorage.removeItem("subscribedGroups");
+    localStorage.removeItem("wallet_balance");
+    localStorage.removeItem("studentId");
+    localStorage.removeItem("studentDataComplete");
   }
 
   return (

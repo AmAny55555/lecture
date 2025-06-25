@@ -175,7 +175,6 @@ export default function LectureVideoPage() {
               {lecture.name}
             </h2>
 
-            {/* حقل التعليق وزر الإرسال */}
             <div className="mb-6 flex items-center gap-2" dir="rtl">
               <div className="relative flex-grow">
                 <FaRegCommentDots className="absolute right-3 top-3 text-black" />
@@ -200,7 +199,6 @@ export default function LectureVideoPage() {
 
             {error && <p className="text-[#bf9916] mt-2">{error}</p>}
 
-            {/* قائمة التعليقات */}
             <div className="mb-4">
               <h3 className="text-2xl font-medium mb-4 text-[#bf9916]">
                 التعليقات

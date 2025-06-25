@@ -316,10 +316,19 @@ function Page() {
           )}
 
           {showChargeBox && !showQRModal && (
-            <div className="absolute -bottom-48 left-1/2 -translate-x-1/2 bg-white text-center z-50 rounded-4xl w-[100%] max-w-md shadow-lg px-6 py-6 mt-50">
+            <div
+              id="chargeBoxBg"
+              className="fixed inset-0 bg-[rgba(0,0,0,0.4)] z-40"
+              onClick={handleChargeBoxBackgroundClick}
+            />
+          )}
+
+          {showChargeBox && !showQRModal && (
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-center z-50 rounded-4xl w-[90%] max-w-md shadow-lg px-6 py-6">
               <p className="font-semibold text-xl text-[#bf9916] mb-3">
                 شحن المحفظة
               </p>
+
               <div className="flex items-center justify-center mb-3">
                 <Image
                   src={"/a.jpg"}

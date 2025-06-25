@@ -144,7 +144,6 @@ export default function HomeworkVideoPage() {
 
   return (
     <div>
-      {/* زر الرجوع */}
       <div className="flex justify-end mb-4 fixed top-4 right-4 sm:right-8 z-10">
         <button
           onClick={() => history.back()}
@@ -175,7 +174,6 @@ export default function HomeworkVideoPage() {
               {lecture.name}
             </h2>
 
-            {/* التعليق وزر الإرسال */}
             <div className="mb-6 flex flex-row-reverse items-center gap-2">
               <div className="relative flex-grow">
                 <FaRegCommentDots className="absolute right-3 top-3 text-black" />

@@ -5,7 +5,7 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
 import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
-import { useUser } from "@/app/context/UserContext"; // لازم تكون عندك هذا الكونتكست
+import { useUser } from "@/app/context/UserContext";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;

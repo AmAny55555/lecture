@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -6,6 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useUser } from "@/app/context/UserContext";
 
 const registerSchema = z
   .object({
@@ -62,7 +65,6 @@ const CustomSelect = ({ options, value, onChange, error }) => {
           />
         </svg>
       </div>
-
       {open && (
         <ul className="absolute z-50 w-full border bg-white max-h-48 overflow-y-auto rounded mt-1 shadow">
           {options.map((option) => (
@@ -79,7 +81,6 @@ const CustomSelect = ({ options, value, onChange, error }) => {
           ))}
         </ul>
       )}
-
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
@@ -92,6 +93,7 @@ function RegisterPage() {
   const [previewImage, setPreviewImage] = useState(null);
   const [cityId, setCityId] = useState("");
   const router = useRouter();
+  const { logout } = useUser(); // ✅ استدعاء دالة الخروج من الكونتكست
 
   const {
     register,
@@ -102,6 +104,17 @@ function RegisterPage() {
   } = useForm({
     resolver: zodResolver(registerSchema),
   });
+
+  // ✅ مسح كل بيانات المستخدم عند دخول صفحة التسجيل
+  useEffect(() => {
+    Cookies.remove("token");
+    Cookies.remove("userName");
+    Cookies.remove("studentId");
+    Cookies.remove("studentDataComplete");
+    localStorage.removeItem("wallet_balance");
+    localStorage.removeItem("money");
+    logout(); // ✅ حذف بيانات الكونتكست
+  }, []);
 
   useEffect(() => {
     async function fetchCities() {
@@ -149,6 +162,7 @@ function RegisterPage() {
       );
 
       const result = await res.json();
+
       if (result.errorCode !== 0) {
         setErrorMessage(result.errorMessage || "فشل في إنشاء الحساب");
         return;

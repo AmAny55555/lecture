@@ -231,7 +231,7 @@ function GroupGrid({
           (type === "online" && item.onlineLectures?.length > 0) ||
           (type === "qr" && item.qrLectures?.length > 0) ||
           (type === "homework" && item.homeWorks?.length > 0) ||
-          type === "books"; // الكتب يمكن فتحها مهما كان السعر
+          type === "books";
 
         const handleClick = () => {
           if (!hasLectures) {
@@ -278,11 +278,9 @@ function GroupGrid({
                 <span className="text-green-600 font-bold">
                   {item.price ?? 0}
                 </span>
-                {/* حذفت كلمة جنيه */}
               </p>
             )}
 
-            {/* لو النوع مش كتب نعرض السعر كالتالي */}
             {type !== "books" && (
               <p className="font-bold text-sm flex justify-between">
                 <span className="text-[#bf9916]">السعر: </span>

@@ -10,7 +10,6 @@ function BottomNav({ isModalOpen = false }) {
 
   const pathname = usePathname();
 
-  // اخفاء BottomNav لأي مسار يبدأ بـ /subject/
   if (
     pathname.includes("/login") ||
     pathname.includes("/rejester") ||
@@ -24,7 +23,7 @@ function BottomNav({ isModalOpen = false }) {
     pathname.includes("/subject/Teacher") ||
     pathname.includes("/subject/subject2") ||
     pathname.includes("/subject/Math") ||
-    pathname.startsWith("/subject/") // <= هنا التعديل
+    pathname.startsWith("/subject/")
   ) {
     return null;
   }
