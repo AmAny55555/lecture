@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
+import { useUser } from "@/app/context/UserContext";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -26,25 +27,14 @@ export default function LectureGroupPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedLectureId, setSelectedLectureId] = useState(null);
-  const [subscribing, setSubscribing] = useState(false);
-  const [message, setMessage] = useState("");
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [subscribedGroups, setSubscribedGroups] = useState([]);
   const [paidMessage, setPaidMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [feedbackColor, setFeedbackColor] = useState("");
 
+  const { money, setMoney, subscribedGroups, addSubscribedGroup } = useUser();
+
   useEffect(() => {
     setToken(getTokenFromCookies());
-    const localBalance = parseFloat(
-      localStorage.getItem("wallet_balance") || "0"
-    );
-    setWalletBalance(localBalance);
-
-    const groups = JSON.parse(
-      localStorage.getItem("subscribed_groups") || "[]"
-    );
-    setSubscribedGroups(groups);
   }, []);
 
   useEffect(() => {
@@ -80,52 +70,78 @@ export default function LectureGroupPage() {
   const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
 
   const handleLectureClick = (lectureId) => {
-    if (isGroupSubscribed) {
+    const price = groupData?.price || 0;
+
+    if (price === 0 || isGroupSubscribed) {
       router.push(
         `/subject/${subjectId}/lecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
       );
     } else {
       setSelectedLectureId(lectureId);
       setShowModal(true);
-      setMessage("");
+      setPaidMessage("");
     }
   };
 
   const handleSubscribeGroup = () => {
     setPaidMessage("باستخدام المحفظة");
-    // المودال يظل ظاهر والخلفية موجودة
   };
 
-  const handleConfirmPayment = () => {
-    const price = groupData?.price || 0;
-    setPaidMessage(""); // إخفاء الرسالة
-    setShowModal(false); // إخفاء المودال
+  const handleConfirmPayment = async () => {
+    const price = groupData?.price || 0; // سعر الاشتراك من البيانات (مثلاً 50)
+    setPaidMessage("");
+    setShowModal(false);
 
-    if (walletBalance >= price) {
-      const newBalance = walletBalance - price;
-      localStorage.setItem("wallet_balance", newBalance.toFixed(2));
-      setWalletBalance(newBalance);
-
-      const updatedGroups = [...subscribedGroups, groupId.toString()];
-      localStorage.setItem("subscribed_groups", JSON.stringify(updatedGroups));
-      setSubscribedGroups(updatedGroups);
-
-      setFeedbackMessage("تم فتح المحاضرة للطالب");
-      setFeedbackColor("bg-green-600");
-
-      setTimeout(() => {
-        setFeedbackMessage(null);
-        router.push(
-          `/subject/${subjectId}/lecture/${groupId}/video/${selectedLectureId}?subjectTeacherId=${subjectTeacherId}`
+    if (money >= price) {
+      try {
+        const res = await fetch(
+          "https://eng-mohamedkhalf.shop/api/OnlineSubSubjects/PayOnlineSubSubjectLectures",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              lang: "ar",
+              "Content-Type": "application/json-patch+json",
+              accept: "text/plain",
+            },
+            body: JSON.stringify({
+              onlineSubSubjectId: parseInt(groupId, 10),
+            }),
+          }
         );
-      }, 2000);
-    } else {
-      setFeedbackMessage("الرصيد غير كافى");
-      setFeedbackColor("bg-red-600");
 
-      setTimeout(() => {
-        setFeedbackMessage(null);
-      }, 2000);
+        if (!res.ok) {
+          throw new Error("فشل في الدفع");
+        }
+
+        // لا نحتاج نقرأ JSON لأن الـ accept: text/plain، ولكن في حال تريد قراءة نص الرد:
+        // const data = await res.text();
+
+        // خصم السعر من الرصيد محلياً (بدون API تحديث)
+        const updatedBalance = money - price;
+        setMoney(updatedBalance);
+        localStorage.setItem("money", updatedBalance);
+
+        addSubscribedGroup(groupId.toString());
+
+        setFeedbackMessage("تم فتح المحاضرة للطالب");
+        setFeedbackColor("bg-green-600");
+
+        setTimeout(() => {
+          setFeedbackMessage(null);
+          router.push(
+            `/subject/${subjectId}/lecture/${groupId}/video/${selectedLectureId}?subjectTeacherId=${subjectTeacherId}`
+          );
+        }, 2000);
+      } catch (error) {
+        setFeedbackMessage("حدث خطأ أثناء الدفع");
+        setFeedbackColor("bg-red-600");
+        setTimeout(() => setFeedbackMessage(null), 2000);
+      }
+    } else {
+      setFeedbackMessage("رصيد المحفظة غير كافى");
+      setFeedbackColor("bg-red-600");
+      setTimeout(() => setFeedbackMessage(null), 2000);
     }
   };
 
@@ -134,24 +150,15 @@ export default function LectureGroupPage() {
     return <p className="text-center text-red-600 mt-10">لا توجد بيانات</p>;
 
   return (
-    <div className="min-h-screen p-4 bg-gray-50 relative" dir="rtl">
-      <button
-        onClick={() => router.back()}
-        className="text-[#bf9916] text-3xl mb-4"
-      >
-        &#8594;
-      </button>
+    <div className="p-4" dir="rtl">
+      <h1 className="text-2xl font-bold mb-4">{groupData.name}</h1>
 
-      <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
-        محاضرات - <span className="text-[#bf9916]">{groupData.name}</span>
-      </h1>
-
-      <div className="flex flex-col gap-4">
+      <div className="space-y-4">
         {groupData.onlineLectures?.map((lecture) => (
           <button
             key={lecture.id}
             onClick={() => handleLectureClick(lecture.id)}
-            className="bg-white shadow-md rounded p-10 text-[#bf9916] font-semibold text-xl text-right"
+            className="block w-full bg-white text-[#bf9916] font-semibold text-xl p-6 rounded shadow text-right"
           >
             {lecture.name}
           </button>
@@ -164,18 +171,15 @@ export default function LectureGroupPage() {
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white p-6 rounded-4xl w-11/12 max-w-sm text-center"
+            className="bg-white rounded-3xl p-6 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-right">
-              <h2 className="text-xl font-bold mb-3">اشتراك</h2>
-              <p className="mb-4">يجب الاشتراك في المحاضرة أولاً</p>
-            </div>
-            <div className="flex items-center justify-end gap-4 mt-4">
+            <h2 className="text-xl font-bold mb-4">اشتراك</h2>
+            <p>يجب الاشتراك في المحاضرة أولاً</p>
+            <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={handleSubscribeGroup}
-                disabled={subscribing}
-                className="text-purple-600 px-4 py-2"
+                className="text-purple-600"
               >
                 اشتراك
               </button>
@@ -185,25 +189,20 @@ export default function LectureGroupPage() {
               >
                 إلغاء
               </button>
-              {message && (
-                <p className="text-sm text-gray-700 ml-4">{message}</p>
-              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ✅ رسالة "باستخدام المحفظة" */}
       {paidMessage && (
         <div
           onClick={handleConfirmPayment}
-          className="cursor-pointer fixed bottom-0 left-0 right-0 bg-white text-[#bf9916] text-center py-4 shadow z-[999]"
+          className="fixed bottom-0 left-0 right-0 bg-white text-[#bf9916] text-center py-4 shadow z-[999] cursor-pointer"
         >
           {paidMessage}
         </div>
       )}
 
-      {/* ✅ رسالة النتيجة المتحركة */}
       {feedbackMessage && (
         <div
           className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 scale-90 animate-pulse text-white px-6 py-3 rounded-xl z-[1000] transition-all duration-500 ${feedbackColor}`}

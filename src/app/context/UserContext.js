@@ -1,72 +1,91 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const UserContext = createContext();
 
-export const UserProvider = ({ children }) => {
+export function UserProvider({ children }) {
   const [userName, setUserName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [token, setToken] = useState(null);
-  const [walletBalance, setWalletBalance] = useState(0);
+  const [token, setToken] = useState("");
+  const [money, setMoney] = useState(0); // الرصيد
+  const [subscribedGroups, setSubscribedGroups] = useState([]);
 
+  // تحميل البيانات من localStorage عند بدء التطبيق
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedName = localStorage.getItem("userName");
-      const storedPhone = localStorage.getItem("phoneNumber");
-      const storedToken = localStorage.getItem("token");
-      const storedBalance = localStorage.getItem("wallet_balance");
+    const savedMoney = localStorage.getItem("money");
+    if (savedMoney !== null) {
+      setMoney(parseFloat(savedMoney));
+    }
 
-      console.log("UserProvider loaded userName:", storedName);
+    const savedSubscribedGroups = localStorage.getItem("subscribedGroups");
+    if (savedSubscribedGroups) {
+      setSubscribedGroups(JSON.parse(savedSubscribedGroups));
+    }
 
-      if (storedName) setUserName(storedName);
-      if (storedPhone) setPhoneNumber(storedPhone);
-      if (storedToken) setToken(storedToken);
-      if (storedBalance) setWalletBalance(parseFloat(storedBalance));
+    const savedUserName = localStorage.getItem("userName");
+    if (savedUserName) {
+      setUserName(savedUserName);
+    }
+
+    const savedPhone = localStorage.getItem("phoneNumber");
+    if (savedPhone) {
+      setPhoneNumber(savedPhone);
+    }
+
+    const savedToken = localStorage.getItem("token");
+    if (savedToken) {
+      setToken(savedToken);
     }
   }, []);
 
-  const login = ({ userName, phoneNumber, token, walletBalance }) => {
+  // دالة تسجيل الدخول مع تخزين كل البيانات
+  function login({ userName, phoneNumber, token, money }) {
     setUserName(userName || "");
     setPhoneNumber(phoneNumber || "");
-    setToken(token || null);
-    setWalletBalance(walletBalance !== undefined ? walletBalance : 0);
+    setToken(token || "");
+    setMoney(money !== undefined ? parseFloat(money) : 0);
 
-    if (typeof window !== "undefined") {
-      if (userName) localStorage.setItem("userName", userName);
-      if (phoneNumber) localStorage.setItem("phoneNumber", phoneNumber);
-      if (token) localStorage.setItem("token", token);
-      if (walletBalance !== undefined)
-        localStorage.setItem("wallet_balance", walletBalance);
+    localStorage.setItem("userName", userName || "");
+    localStorage.setItem("phoneNumber", phoneNumber || "");
+    localStorage.setItem("token", token || "");
+    localStorage.setItem("money", money !== undefined ? money.toString() : "0");
+  }
+
+  // إضافة مجموعة مشترك فيها
+  function addSubscribedGroup(groupId) {
+    if (!subscribedGroups.includes(groupId)) {
+      const updated = [...subscribedGroups, groupId];
+      setSubscribedGroups(updated);
+      localStorage.setItem("subscribedGroups", JSON.stringify(updated));
     }
-  };
+  }
 
-  const logout = () => {
+  // دالة لتسجيل الخروج (مثال)
+  function logout() {
     setUserName("");
     setPhoneNumber("");
-    setToken(null);
-    setWalletBalance(0);
+    setToken("");
+    setMoney(0);
+    setSubscribedGroups([]);
 
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("userName");
-      localStorage.removeItem("phoneNumber");
-      localStorage.removeItem("token");
-      localStorage.removeItem("wallet_balance");
-      localStorage.removeItem("student_data");
-    }
-  };
+    localStorage.removeItem("userName");
+    localStorage.removeItem("phoneNumber");
+    localStorage.removeItem("token");
+    localStorage.removeItem("money");
+    localStorage.removeItem("subscribedGroups");
+  }
 
   return (
     <UserContext.Provider
       value={{
         userName,
-        setUserName,
         phoneNumber,
-        setPhoneNumber,
         token,
-        setToken,
-        walletBalance,
-        setWalletBalance,
+        money,
+        setMoney,
+        subscribedGroups,
+        addSubscribedGroup,
         login,
         logout,
       }}
@@ -74,6 +93,8 @@ export const UserProvider = ({ children }) => {
       {children}
     </UserContext.Provider>
   );
-};
+}
 
-export const useUser = () => useContext(UserContext);
+export function useUser() {
+  return useContext(UserContext);
+}

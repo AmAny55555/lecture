@@ -7,23 +7,21 @@ import { useUser } from "./context/UserContext";
 
 function Nav() {
   const pathname = usePathname();
-  const { userName: contextUserName, setUserName } = useUser();
+  const { userName } = useUser();
 
   const [hydrated, setHydrated] = useState(false);
-  const [userName, setLocalUserName] = useState("");
+  const [localUserName, setLocalUserName] = useState("");
 
   useEffect(() => {
     setHydrated(true);
 
-    // لو الـ Context فاضي، نحاول نجيب الاسم من localStorage
-    if (!contextUserName) {
+    if (!userName) {
       const storedName = localStorage.getItem("userName") || "";
       setLocalUserName(storedName);
-      if (storedName) setUserName(storedName);
     } else {
-      setLocalUserName(contextUserName);
+      setLocalUserName(userName);
     }
-  }, [contextUserName, setUserName]);
+  }, [userName]);
 
   const hiddenRoutes = [
     "/login",
@@ -44,8 +42,7 @@ function Nav() {
     hiddenRoutes.includes(pathname) || pathname.startsWith("/subject/");
 
   if (shouldHideNavbar) return null;
-
-  if (!hydrated) return null; // منع hydration mismatch
+  if (!hydrated) return null;
 
   return (
     <div>
@@ -65,7 +62,7 @@ function Nav() {
         <div className="right flex items-center justify-center gap-2">
           <div>
             <h1 className="sm:text-sm md:font-semibold md:text-2xl">
-              {userName ? `أهلاً بك ${userName}` : "أهلاً بك"}
+              {localUserName ? `أهلاً بك ${localUserName}` : "أهلاً بك"}
             </h1>
             <h1 className="font-medium text-right pt-2">... لنبدأ التعلم</h1>
           </div>

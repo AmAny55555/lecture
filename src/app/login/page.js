@@ -9,7 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Spinner from "../components/Spinner";
 import Cookies from "js-cookie";
-import { useUser } from "../context/UserContext";
+import { useUser } from "@/app/context/UserContext"; // ✅ تأكد من الاستيراد
 
 const loginSchema = z.object({
   phone: z
@@ -21,15 +21,16 @@ const loginSchema = z.object({
 
 export default function Login() {
   const router = useRouter();
-  const { login } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // ✅ أول ما الصفحة تفتح، نتحقق من وجود توكن
+  const { login } = useUser(); // ✅ لاستخدام login من الكونتكست
+
   useEffect(() => {
     async function checkLogin() {
       const token = Cookies.get("token");
+
       if (!token) {
         setCheckingAuth(false);
         return;
@@ -38,12 +39,16 @@ export default function Login() {
       try {
         const res = await fetch(
           "https://eng-mohamedkhalf.shop/api/Students/CheckStudentData",
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        const data = await res.json();
-        console.log("✅ checkLogin data:", data);
 
-        if (data.errorCode === 0 && data.data === true) {
+        const data = await res.json();
+
+        if (data.errorCode === 0 && data.data?.isProfileComplete) {
           router.replace("/main");
         } else {
           router.replace("/more-info");
@@ -64,12 +69,12 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (dataForm) => {
+  const onSubmit = async (data) => {
     setErrorMessage("");
 
     const payload = {
-      phoneNumber: dataForm.phone,
-      password: dataForm.password,
+      phoneNumber: data.phone,
+      password: data.password,
       isPersist: true,
       deviceToken: null,
     };
@@ -82,38 +87,49 @@ export default function Login() {
       });
 
       const result = await res.json();
-      if (result.errorCode !== 0)
+      console.log("🎯 بيانات المستخدم من السيرفر:", result.data);
+
+      if (result.errorCode !== 0) {
         throw new Error(result.errorMessage || "فشل تسجيل الدخول");
+      }
 
       const token = result.data?.token;
       const fullName = result.data?.fullName;
+      const studentId = result.data?.userId;
       const balance = result.data?.walletBalance;
+      const money = result.data?.money; // ✅ الحصول على قيمة المال
 
       if (token) {
         Cookies.set("token", token, { expires: 7 });
         Cookies.remove("studentDataComplete");
       }
 
-      login({
-        userName: fullName || "",
-        token: token || null,
-        walletBalance: balance ?? 0,
-      });
-
       if (fullName) Cookies.set("userName", fullName, { expires: 7 });
+      if (studentId) Cookies.set("studentId", studentId, { expires: 7 });
       if (balance !== undefined)
         localStorage.setItem("wallet_balance", balance);
+      if (money !== undefined) localStorage.setItem("money", money); // ✅ تخزين المال
 
-      // ✅ نتحقق تاني بعد تسجيل الدخول
+      // ✅ تخزين كل البيانات في الكونتكست
+      login({
+        userName: fullName,
+        phoneNumber: data.phone,
+        token,
+        walletBalance: balance,
+        money,
+      });
+
       const checkRes = await fetch(
         "https://eng-mohamedkhalf.shop/api/Students/CheckStudentData",
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-
       const checkData = await checkRes.json();
-      console.log("✅ checkStudentData after login:", checkData);
 
-      if (checkData.errorCode === 0 && checkData.data === true) {
+      if (checkData.errorCode === 0 && checkData.data?.isProfileComplete) {
         Cookies.set("studentDataComplete", "true", { expires: 7 });
         router.replace("/main");
       } else {
@@ -121,8 +137,7 @@ export default function Login() {
         router.replace("/more-info");
       }
     } catch (err) {
-      console.error("❌ Login error:", err);
-      setErrorMessage(err.message || "حدث خطأ أثناء تسجيل الدخول");
+      setErrorMessage(err.message);
     }
   };
 
@@ -144,13 +159,15 @@ export default function Login() {
       </div>
 
       <div className="flex justify-center items-center flex-col">
-        <Image
-          src="/logo.jpg"
-          alt="logo"
-          width={300}
-          height={200}
-          className="object-fill mb-6"
-        />
+        <div className="logo mb-6">
+          <Image
+            src="/logo.jpg"
+            alt="logo"
+            width={300}
+            height={200}
+            className="object-fill"
+          />
+        </div>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -190,21 +207,25 @@ export default function Login() {
             <p className="text-red-500 text-sm mb-2">{errorMessage}</p>
           )}
 
-          <button
-            type="submit"
-            className="bg-[#bf9916] w-[300px] text-white h-10 rounded-xl"
-          >
-            تسجيل الدخول
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="submit"
+              className="bg-[#bf9916] w-[300px] text-white h-10 rounded-xl"
+            >
+              تسجيل الدخول
+            </button>
 
-          <p className="text-[#9d9d9d] font-bold text-center text-sm w-[240px] mt-2">
-            باستخدام خدماتنا فإنك توافق على الشروط والسياسات الخاصة بنا
-          </p>
+            <p className="text-[#9d9d9d] font-bold text-center text-sm w-[240px]">
+              باستخدام خدماتنا فإنك توافق على الشروط والسياسات الخاصة بنا
+            </p>
 
-          <p className="text-[#645394] text-center text-sm mt-1">
-            <span className="text-[#4a4a4c] font-medium">ليس لديك حساب ؟ </span>
-            <Link href="/register">اشترك</Link>
-          </p>
+            <p className="text-[#645394] text-center text-sm">
+              <span className="text-[#4a4a4c] font-medium">
+                ليس لديك حساب ؟
+              </span>{" "}
+              <Link href="/rejester">اشترك</Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>

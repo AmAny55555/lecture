@@ -3,287 +3,261 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
 import { useUser } from "@/app/context/UserContext";
 import jsQR from "jsqr";
 import Spinner from "@/app/components/Spinner";
+import Cookies from "js-cookie";
 
 function Page() {
   const router = useRouter();
-
-  const { userName, phoneNumber: userPhoneNumber } = useUser();
+  const { userName, phoneNumber: userPhoneNumber, money, setMoney } = useUser();
 
   const [phoneNumber, setPhoneNumber] = useState(userPhoneNumber || "");
-  const [balance, setBalance] = useState(0);
-
+  const [balance, setBalance] = useState(
+    !isNaN(parseFloat(money)) ? parseFloat(money) : 0
+  );
   const [showChargeBox, setShowChargeBox] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
-
   const [cameraActive, setCameraActive] = useState(false);
   const [qrStep, setQrStep] = useState(null);
-
   const [barcode, setBarcode] = useState("");
-  const [manualAmount, setManualAmount] = useState("");
-
   const [uploadError, setUploadError] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
-
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
+
   useEffect(() => {
-    const storedToken = localStorage.getItem("token") || "";
+    const validBalance = !isNaN(parseFloat(money)) ? parseFloat(money) : 0;
+    setBalance(validBalance);
+  }, [money]);
+
+  useEffect(() => {
+    const storedToken = Cookies.get("token") || "";
     setToken(storedToken);
 
-    const storedBalance = localStorage.getItem("wallet_balance");
-    if (storedBalance) setBalance(parseFloat(storedBalance));
-
     if (storedToken) {
-      console.log("🔑 عندي توكن:", storedToken); // هنا تأكد انه في توكن
-
       fetch("https://eng-mohamedkhalf.shop/api/Users/GetUserInfo", {
-        headers: {
-          Authorization: `Bearer ${storedToken}`,
-        },
+        headers: { Authorization: `Bearer ${storedToken}` },
       })
-        .then((res) => {
-          console.log("🔄 استجابة ال API:", res);
-          return res.json();
-        })
+        .then((res) => res.json())
         .then((data) => {
-          console.log("📦 بيانات المستخدم:", data);
-          if (data && data.data && data.errorCode === 0) {
+          if (data?.data?.phoneNumber && data.errorCode === 0) {
             setPhoneNumber(data.data.phoneNumber);
           }
           setLoading(false);
         })
-        .catch((err) => {
-          console.error("❌ خطأ في جلب بيانات المستخدم:", err);
-          setLoading(false);
-        });
+        .catch(() => setLoading(false));
     } else {
-      console.log("🚫 مفيش توكن مخزن");
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (userPhoneNumber && userPhoneNumber !== phoneNumber) {
-      setPhoneNumber(userPhoneNumber);
-    }
-  }, [userPhoneNumber]);
+    let animationFrameId;
 
-  function showMessage(text, type = "info") {
-    setMessage(text);
-    setMessageType(type);
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
-  }
+    if (cameraActive) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(phoneNumber).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
+      const constraints = { video: { facingMode: "environment" } };
 
-  const openFilePicker = () => {
-    if (fileInputRef.current) fileInputRef.current.click();
-  };
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then((stream) => {
+          video.srcObject = stream;
+          video.setAttribute("playsinline", true);
+          video.play();
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        try {
-          const img = new window.Image();
-          img.onload = () => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            const imageData = ctx.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-            if (code) {
-              setBarcode(code.data);
-              setUploadError("");
-              showMessage(
-                "تم قراءة QR من الصورة بنجاح: " + code.data,
-                "success"
+          const tick = () => {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              canvas.height = video.videoHeight;
+              canvas.width = video.videoWidth;
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
               );
-              setQrStep("manual");
-            } else {
-              setUploadError("لم يتم التعرف على QR في هذه الصورة");
-              showMessage("لم يتم التعرف على QR في هذه الصورة", "error");
+              const code = jsQR(imageData.data, canvas.width, canvas.height);
+              if (code) {
+                setBarcode(code.data);
+                setQrStep("manual");
+                setCameraActive(false);
+                stream.getTracks().forEach((track) => track.stop());
+                return;
+              }
             }
+            animationFrameId = requestAnimationFrame(tick);
           };
-          img.onerror = () => {
-            setUploadError("حدث خطأ أثناء تحميل الصورة");
-            showMessage("حدث خطأ أثناء تحميل الصورة", "error");
-          };
-          img.src = event.target.result;
-        } catch (error) {
-          setUploadError("خطأ غير متوقع أثناء معالجة الصورة");
-          showMessage("خطأ غير متوقع أثناء معالجة الصورة", "error");
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  useEffect(() => {
-    if (!cameraActive) return;
-
-    let stream = null;
-    let scanInterval = null;
-
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false,
+          tick();
+        })
+        .catch(() => {
+          setUploadError("تعذر الوصول إلى الكاميرا.");
+          setCameraActive(false);
         });
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.setAttribute("playsinline", true);
-          videoRef.current.setAttribute("muted", true);
-          videoRef.current.muted = true;
-
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current.play().catch((err) => {
-              console.error("خطأ في تشغيل الفيديو:", err);
-              setUploadError("تعذر تشغيل الكاميرا. تأكد من الأذونات.");
-              showMessage("تعذر تشغيل الكاميرا. تأكد من الأذونات.", "error");
-            });
-          };
+      return () => {
+        cancelAnimationFrame(animationFrameId);
+        if (videoRef.current && videoRef.current.srcObject) {
+          videoRef.current.srcObject
+            .getTracks()
+            .forEach((track) => track.stop());
         }
-
-        scanInterval = setInterval(() => {
-          if (!videoRef.current || videoRef.current.readyState !== 4) return;
-          const video = videoRef.current;
-          const canvas = canvasRef.current;
-          if (!canvas) return;
-
-          const ctx = canvas.getContext("2d");
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-          if (code) {
-            setBarcode(code.data);
-            showMessage("تم قراءة QR من الصورة بنجاح: " + code.data, "success");
-            setCameraActive(false);
-            setQrStep("manual");
-            clearInterval(scanInterval);
-          }
-        }, 500);
-      } catch (err) {
-        console.error("فشل الوصول للكاميرا:", err);
-        setUploadError("لم يتم السماح باستخدام الكاميرا أو حدث خطأ.");
-        showMessage("لم يتم السماح باستخدام الكاميرا أو حدث خطأ.", "error");
-      }
+      };
     }
-
-    startCamera();
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-      if (scanInterval) clearInterval(scanInterval);
-    };
   }, [cameraActive]);
 
   const handleChargeBoxBackgroundClick = (e) => {
     if (e.target.id === "chargeBoxBg") {
       setShowChargeBox(false);
+      setQrStep(null);
+      setCameraActive(false);
+      setUploadError("");
+      setBarcode("");
     }
+  };
+
+  const showMessage = (text, type = "info") => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
+  };
+
+  const handleCheckBarcode = async () => {
+    setError("");
+    if (!barcode) {
+      setError("من فضلك أدخل رقم الباركود");
+      return;
+    }
+
+    try {
+      const usedBarcodes = JSON.parse(
+        localStorage.getItem("used_barcodes") || "[]"
+      );
+      if (!usedBarcodes.includes(barcode)) {
+        usedBarcodes.push(barcode);
+        localStorage.setItem("used_barcodes", JSON.stringify(usedBarcodes));
+      }
+
+      const res = await fetch(
+        `https://eng-mohamedkhalf.shop/api/QRs/ReadQr/${encodeURIComponent(
+          barcode
+        )}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+            accept: "application/json",
+          },
+          body: "",
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.errorCode !== 0) {
+        showMessage(data.errorMessage || "حدث خطأ", "error");
+        return;
+      }
+
+      // تحديث الرصيد الحقيقي بعد الشحن
+      const balanceRes = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Wallet/GetWalletBalance",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+        }
+      );
+
+      const balanceData = await balanceRes.json();
+      if (balanceData?.errorCode === 0 && balanceData?.data != null) {
+        const newBalance = parseFloat(balanceData.data);
+        setMoney(newBalance);
+        setBalance(newBalance);
+        localStorage.setItem("money", newBalance);
+        showMessage("تم الشحن بنجاح", "success");
+      } else {
+        showMessage("تم الشحن، لكن لم نتمكن من قراءة الرصيد", "info");
+      }
+
+      setShowQRModal(false);
+      setShowChargeBox(false);
+      setQrStep(null);
+      setBarcode("");
+    } catch (error) {
+      showMessage("حدث خطأ أثناء قراءة QR", "error");
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(phoneNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
   };
 
   const handleQRModalBackgroundClick = (e) => {
     if (e.target.id === "qrModalBg") {
       setShowQRModal(false);
       setQrStep(null);
-      setBarcode("");
-      setError("");
-      setUploadError("");
-      setShowChargeBox(false);
       setCameraActive(false);
+      setUploadError("");
+      setBarcode("");
     }
   };
 
-  const handleCheckBarcode = () => {
-    setError("");
+  const handleFileChange = async (e) => {
+    setUploadError("");
+    const file = e.target.files[0];
+    if (!file) return;
 
-    if (!barcode) {
-      setError("من فضلك أدخل رقم الباركود");
-      return;
-    }
-
-    if (!manualAmount || parseFloat(manualAmount) <= 0) {
-      setError("من فضلك أدخل مبلغ صحيح للشحن");
-      return;
-    }
-
-    const usedBarcodes = JSON.parse(
-      localStorage.getItem("used_barcodes") || "[]"
-    );
-
-    if (usedBarcodes.includes(barcode)) {
-      showMessage("هذا الباركود مستخدم من قبل", "success");
-      return;
-    }
-
-    usedBarcodes.push(barcode);
-    localStorage.setItem("used_barcodes", JSON.stringify(usedBarcodes));
-
-    const newBalance = balance + parseFloat(manualAmount);
-    setBalance(newBalance);
-    localStorage.setItem("wallet_balance", newBalance);
-    showMessage("تم شحن الرصيد بنجاح!", "success");
-
-    setQrStep(null);
-    setBarcode("");
-    setManualAmount("");
-    setShowQRModal(false);
-    setShowChargeBox(false);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+        if (code) {
+          setBarcode(code.data);
+          setQrStep("manual");
+          setCameraActive(false);
+          setUploadError("");
+        } else {
+          setUploadError("لم يتم التعرف على كود QR، حاول مرة أخرى بصورة أوضح");
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
   };
 
-  useEffect(() => {
-    const updateBalance = () => {
-      const newBalance = localStorage.getItem("wallet_balance");
-      if (newBalance) {
-        setBalance(parseFloat(newBalance));
-      }
-    };
-
-    window.addEventListener("focus", updateBalance);
-
-    return () => {
-      window.removeEventListener("focus", updateBalance);
-    };
-  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem("money"); // لو عايز تحتفظ الرصيد حتى بعد تسجيل الخروج، احذف هذا السطر
+    router.push("/login");
+  };
 
   return (
     <div className="p-4 max-w-full" dir="rtl">
@@ -444,19 +418,6 @@ function Page() {
                       type="text"
                       value={barcode}
                       onChange={(e) => setBarcode(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded mb-2"
-                    />
-
-                    <label className="block mt-4 mb-2 font-semibold">
-                      مبلغ الشحن
-                    </label>
-                    <input
-                      placeholder=""
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={manualAmount}
-                      onChange={(e) => setManualAmount(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded mb-2"
                     />
 

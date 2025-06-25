@@ -140,9 +140,7 @@ export default function DetailsPage() {
         >
           &#8594;
         </button>
-        <h1 className="text-3xl text-white font-bold mt-2 mb-4 text-center">
-          الرياضيات
-        </h1>
+        <h1 className="text-3xl text-white font-bold mt-8 mb-4 ">الرياضيات</h1>
 
         <div className="grid grid-cols-2 gap-8 place-items-center mt-4 w-[90%] mx-auto">
           {tabs.map((tab) => (
