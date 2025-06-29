@@ -36,7 +36,9 @@ function getEmbedUrl(url) {
       videoId = urlObj.searchParams.get("v");
     }
 
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    return videoId
+      ? `https://www.youtube.com/embed/${videoId}?modestbranding=1&controls=0&disablekb=1&rel=0&showinfo=0`
+      : null;
   } catch {
     return null;
   }
@@ -56,6 +58,26 @@ export default function LectureVideoPage() {
   useEffect(() => {
     document.documentElement.lang = "ar";
     setToken(getTokenFromCookies());
+
+    const handleContextMenu = (e) => e.preventDefault();
+    const handleKeyDown = (e) => {
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) ||
+        (e.ctrlKey && e.key === "S") ||
+        e.key === "PrintScreen"
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   useEffect(() => {

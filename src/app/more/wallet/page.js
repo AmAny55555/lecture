@@ -34,8 +34,7 @@ function Page() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const validBalance = !isNaN(parseFloat(money)) ? parseFloat(money) : 0;
-    setBalance(validBalance);
+    setBalance(!isNaN(parseFloat(money)) ? parseFloat(money) : 0);
   }, [money]);
 
   useEffect(() => {
@@ -117,22 +116,10 @@ function Page() {
     }
   }, [cameraActive]);
 
-  const handleChargeBoxBackgroundClick = (e) => {
-    if (e.target.id === "chargeBoxBg") {
-      setShowChargeBox(false);
-      setQrStep(null);
-      setCameraActive(false);
-      setUploadError("");
-      setBarcode("");
-    }
-  };
-
   const showMessage = (text, type = "info") => {
     setMessage(text);
     setMessageType(type);
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+    setTimeout(() => setMessage(""), 3000);
   };
 
   const handleCheckBarcode = async () => {
@@ -143,14 +130,6 @@ function Page() {
     }
 
     try {
-      const usedBarcodes = JSON.parse(
-        localStorage.getItem("used_barcodes") || "[]"
-      );
-      if (!usedBarcodes.includes(barcode)) {
-        usedBarcodes.push(barcode);
-        localStorage.setItem("used_barcodes", JSON.stringify(usedBarcodes));
-      }
-
       const res = await fetch(
         `https://eng-mohamedkhalf.shop/api/QRs/ReadQr/${encodeURIComponent(
           barcode
@@ -173,7 +152,16 @@ function Page() {
         return;
       }
 
-      // تحديث الرصيد الحقيقي بعد الشحن
+      // ✅ خزّن الباركود بعد نجاح الشحن فقط
+      const usedBarcodes = JSON.parse(
+        localStorage.getItem("used_barcodes") || "[]"
+      );
+      if (!usedBarcodes.includes(barcode)) {
+        usedBarcodes.push(barcode);
+        localStorage.setItem("used_barcodes", JSON.stringify(usedBarcodes));
+      }
+
+      // ✅ تحديث الرصيد من API
       const balanceRes = await fetch(
         "https://eng-mohamedkhalf.shop/api/Wallet/GetWalletBalance",
         {
@@ -187,9 +175,9 @@ function Page() {
       const balanceData = await balanceRes.json();
       if (balanceData?.errorCode === 0 && balanceData?.data != null) {
         const newBalance = parseFloat(balanceData.data);
-        setMoney(newBalance);
-        setBalance(newBalance);
-        localStorage.setItem("money", newBalance);
+        setMoney(newBalance); // تحديث الكونتكست
+        setBalance(newBalance); // تحديث المحفظة الحالية
+        localStorage.setItem("money", newBalance); // حفظ جديد
         showMessage("تم الشحن بنجاح", "success");
       } else {
         showMessage("تم الشحن، لكن لم نتمكن من قراءة الرصيد", "info");
@@ -212,16 +200,6 @@ function Page() {
 
   const openFilePicker = () => {
     fileInputRef.current?.click();
-  };
-
-  const handleQRModalBackgroundClick = (e) => {
-    if (e.target.id === "qrModalBg") {
-      setShowQRModal(false);
-      setQrStep(null);
-      setCameraActive(false);
-      setUploadError("");
-      setBarcode("");
-    }
   };
 
   const handleFileChange = async (e) => {
@@ -255,8 +233,28 @@ function Page() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("money"); // لو عايز تحتفظ الرصيد حتى بعد تسجيل الخروج، احذف هذا السطر
+    localStorage.removeItem("money");
     router.push("/login");
+  };
+
+  const handleChargeBoxBackgroundClick = (e) => {
+    if (e.target.id === "chargeBoxBg") {
+      setShowChargeBox(false);
+      setQrStep(null);
+      setCameraActive(false);
+      setUploadError("");
+      setBarcode("");
+    }
+  };
+
+  const handleQRModalBackgroundClick = (e) => {
+    if (e.target.id === "qrModalBg") {
+      setShowQRModal(false);
+      setQrStep(null);
+      setCameraActive(false);
+      setUploadError("");
+      setBarcode("");
+    }
   };
 
   return (

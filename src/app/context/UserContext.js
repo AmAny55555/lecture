@@ -38,6 +38,21 @@ export function UserProvider({ children }) {
     }
   }, []);
 
+  // ✅ تحديث تلقائي للرصيد عند تغيّره في localStorage (مثلاً بعد الشحن)
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === "money") {
+        setMoney(parseFloat(event.newValue) || 0);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
   function login({ userName, phoneNumber, token, money }) {
     setUserName(userName || "");
     setPhoneNumber(phoneNumber || "");
