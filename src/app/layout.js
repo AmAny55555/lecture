@@ -3,7 +3,7 @@
 import "./globals.css";
 import Nav from "./Nav";
 import BottomNav from "./(Main)/BottomNav";
-import { UserProvider } from "./context/UserContext"; // ✅ استيراد الكونتكست
+import { UserProvider } from "./context/UserContext";
 
 export const metadata = {
   title: "Create Next App",
@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
           referrerPolicy="no-referrer"
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased bg-white text-black">
         <UserProvider>
           <Nav />
           <main className="pb-32">{children}</main>
