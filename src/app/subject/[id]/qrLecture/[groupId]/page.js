@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
-import Link from "next/link";
+
 import { FiArrowRight } from "react-icons/fi";
 import { useUser } from "@/app/context/UserContext";
 
@@ -79,7 +79,7 @@ export default function QrLectureGroupPage() {
 
     if (price === 0 || isGroupSubscribed) {
       router.push(
-        `/subject/${subjectId}/qrlecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
+        `/subject/${subjectId}/qrLecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
       );
     } else {
       setSelectedLectureId(lectureId);
@@ -119,7 +119,6 @@ export default function QrLectureGroupPage() {
           throw new Error("فشل في الدفع");
         }
 
-        // خصم الرصيد محليًا
         const updatedBalance = money - price;
         setMoney(updatedBalance);
         localStorage.setItem("money", updatedBalance);
@@ -215,6 +214,7 @@ export default function QrLectureGroupPage() {
         <div
           onClick={handleConfirmPayment}
           className="fixed bottom-0 left-0 right-0 bg-white text-[#bf9916] text-center py-4 shadow z-[999] cursor-pointer"
+          style={{ userSelect: "none" }}
         >
           {paidMessage}
         </div>

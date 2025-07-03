@@ -18,7 +18,7 @@ const tabs = [
     key: "qr",
     label: "محاضرات QR",
     icon: <FaQrcode />,
-    route: "qrlecture",
+    route: "qrLecture",
   },
   {
     key: "homework",
@@ -76,13 +76,17 @@ export default function DetailsPage() {
           },
         });
         const json = await res.json();
+
+        console.log("📦 البيانات الراجعة من السيرفر:", json);
+        console.log("📘 التبويب:", activeTab);
+
         if (json.errorCode !== 0) {
           setData([]);
         } else {
           setData(json.data || []);
         }
       } catch (e) {
-        console.error(e);
+        console.error("❌ خطأ في جلب البيانات:", e);
         setError("خطأ أثناء جلب البيانات");
         setData([]);
       } finally {
@@ -230,7 +234,7 @@ function GroupGrid({
         const hasLectures =
           (type === "online" && item.onlineLectures?.length > 0) ||
           (type === "qr" && item.qrLectures?.length > 0) ||
-          (type === "homework" && item.homeWorks?.length > 0) ||
+          (type === "homework" && item.id != null) || // هنا تعديل شرط الواجبات
           type === "books";
 
         const handleClick = () => {
@@ -238,11 +242,15 @@ function GroupGrid({
             onNoLecturesClick();
             return;
           }
-          router.push(
-            type === "books"
-              ? `/subject/${subjectId}/books/${item.id}?subjectTeacherId=${subjectTeacherId}`
-              : `/subject/${subjectId}/${routePrefix}/${item.id}?subjectTeacherId=${subjectTeacherId}`
-          );
+          if (type === "books") {
+            router.push(
+              `/subject/${subjectId}/books/${item.id}?subjectTeacherId=${subjectTeacherId}`
+            );
+          } else {
+            router.push(
+              `/subject/${subjectId}/${routePrefix}/${item.id}?subjectTeacherId=${subjectTeacherId}`
+            );
+          }
         };
 
         return (
@@ -273,18 +281,25 @@ function GroupGrid({
               </p>
             )}
 
-            {type === "books" && (
-              <p className="text-sm text-[#bf9916] mb-1 flex justify-between">
-                <span className="text-green-600 font-bold">
-                  {item.price ?? 0}
-                </span>
-              </p>
-            )}
-
-            {type !== "books" && (
+            {type === "books" ? (
+              <div className="text-sm text-[#bf9916] mb-1 space-y-2">
+                <div className="flex gap-2">
+                  <span className="font-semibold">الوصف:</span>
+                  <span className="text-[#bf9916] ">
+                    {item.description || "لا يوجد وصف"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">السعر:</span>
+                  <span className="text-green-600 font-bold">
+                    {item.price ?? 0} جنيه
+                  </span>
+                </div>
+              </div>
+            ) : (
               <p className="font-bold text-sm flex justify-between">
                 <span className="text-[#bf9916]">السعر: </span>
-                <span className="text-green-600">{item.price ?? 0}</span>
+                <span className="text-green-600">{item.price ?? 0} جنيه</span>
               </p>
             )}
           </div>

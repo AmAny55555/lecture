@@ -25,6 +25,7 @@ export default function BookLinksPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [links, setLinks] = useState([]);
+  const [bookData, setBookData] = useState(null);
 
   useEffect(() => {
     setToken(getTokenFromCookies());
@@ -50,14 +51,17 @@ export default function BookLinksPage() {
         const json = await res.json();
         if (json.errorCode !== 0) {
           setLinks([]);
+          setBookData(null);
           setError("لا يوجد بيانات");
         } else {
-          setLinks(json.data?.links || []);
+          setLinks(json.data?.links || null);
+          setBookData(json.data || null);
         }
       } catch (e) {
         console.error(e);
         setError("حدث خطأ أثناء جلب البيانات");
         setLinks([]);
+        setBookData(null);
       } finally {
         setLoading(false);
       }
@@ -75,19 +79,17 @@ export default function BookLinksPage() {
           className="text-[#bf9916] text-2xl hover:text-[#a77f14] transition"
           title="رجوع"
         >
-          &#8592;
+          &#8594; {/* السهم لليمين */}
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6 text-[#bf9916]">عناوين الكتاب</h1>
+      <h1 className="text-2xl font-bold mb-10 mt-10 text-[#bf9916]">الكتب</h1>
 
       {loading ? (
         <Spinner />
       ) : error ? (
         <p className="text-red-500">{error}</p>
-      ) : links.length === 0 ? (
-        <NoItem text="لا يوجد عناوين للكتاب" />
-      ) : (
+      ) : links && links.length > 0 ? (
         <ul className="space-y-3">
           {links.map((linkItem, index) => (
             <li
@@ -109,6 +111,38 @@ export default function BookLinksPage() {
             </li>
           ))}
         </ul>
+      ) : bookData ? (
+        <div className="bg-white p-6 rounded shadow flex gap-6 items-center">
+          <div className="w-32 h-40 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+            {bookData.photos && bookData.photos.length > 0 ? (
+              <img
+                src={`https://eng-mohamedkhalf.shop${bookData.photos[0].replace(
+                  /\\/g,
+                  "/"
+                )}`}
+                alt={bookData.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                لا توجد صورة
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-semibold mb-2 text-[#bf9916]">
+              اسم الكتاب : {bookData.name}
+            </h2>
+            <p className="text-[#bf9916] mb-2">
+              الوصف: {bookData.description || "لا يوجد وصف"}
+            </p>
+            <p className="text-green-600 font-bold">
+              السعر: {bookData.price ?? 0} جنيه
+            </p>
+          </div>
+        </div>
+      ) : (
+        <NoItem text="لا يوجد عناوين للكتاب" />
       )}
     </div>
   );

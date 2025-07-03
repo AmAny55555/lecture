@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
-import { FiArrowRight } from "react-icons/fi";
+import NoItem from "@/app/NoItem";
 import { useUser } from "@/app/context/UserContext";
 
 function getTokenFromCookies() {
@@ -16,16 +16,17 @@ function getTokenFromCookies() {
   return cookies.token || null;
 }
 
-export default function HomeworkGroupPage() {
-  const { id: subjectId, groupId } = useParams();
+export default function HomeworkListPage() {
+  const { id: subjectId } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const subjectTeacherId = searchParams.get("subjectTeacherId");
-
   const [token, setToken] = useState(null);
-  const [groupData, setGroupData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [homeworks, setHomeworks] = useState([]);
+
   const [showModal, setShowModal] = useState(false);
   const [selectedHomeworkId, setSelectedHomeworkId] = useState(null);
   const [paidMessage, setPaidMessage] = useState("");
@@ -39,9 +40,11 @@ export default function HomeworkGroupPage() {
   }, []);
 
   useEffect(() => {
-    if (!token || !subjectTeacherId || !groupId) return;
+    if (!token || !subjectTeacherId) return;
 
-    const fetchData = async () => {
+    async function fetchHomeworks() {
+      setLoading(true);
+      setError(null);
       try {
         const res = await fetch(
           `https://eng-mohamedkhalf.shop/api/HomeWorks/GetHomeWorkLectures/${subjectTeacherId}`,
@@ -54,46 +57,53 @@ export default function HomeworkGroupPage() {
           }
         );
         const json = await res.json();
-        if (json.errorCode === 0) {
-          const group = json.data.find((g) => g.id.toString() === groupId);
-          setGroupData(group);
+
+        if (json.errorCode !== 0) {
+          setError("لا توجد واجبات لهذا المدرس");
+          setHomeworks([]);
+        } else {
+          setHomeworks(json.data || []);
         }
-      } catch (err) {
-        console.error("Error fetching homework lectures:", err);
+      } catch (e) {
+        setError("حدث خطأ أثناء جلب الواجبات");
+        setHomeworks([]);
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchData();
-  }, [token, subjectTeacherId, groupId]);
+    fetchHomeworks();
+  }, [token, subjectTeacherId]);
 
-  const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
+  const isSubscribed = subscribedGroups.includes(
+    selectedHomeworkId?.toString()
+  );
 
-  const handleHomeworkClick = (hwId) => {
-    const price = groupData?.price || 0;
-
-    if (price === 0 || isGroupSubscribed) {
+  const handleHomeworkClick = (hw) => {
+    if (hw.price === 0 || isSubscribed) {
       router.push(
-        `/subject/${subjectId}/homework/${groupId}/video/${hwId}?subjectTeacherId=${subjectTeacherId}`
+        `/subject/${subjectId}/homework/${subjectTeacherId}/video/${hw.id}?subjectTeacherId=${subjectTeacherId}`
       );
     } else {
-      setSelectedHomeworkId(hwId);
+      setSelectedHomeworkId(hw.id);
       setShowModal(true);
       setPaidMessage("");
     }
   };
 
-  const handleSubscribeGroup = () => {
+  const handleSubscribe = () => {
     setPaidMessage("باستخدام المحفظة");
   };
 
   const handleConfirmPayment = async () => {
-    const price = groupData?.price || 0;
+    if (!selectedHomeworkId) return;
+    const hw = homeworks.find((h) => h.id === selectedHomeworkId);
+    if (!hw) return;
+
     setPaidMessage("");
     setShowModal(false);
 
-    if (money >= price) {
+    if (money >= hw.price) {
       try {
         const res = await fetch(
           "https://eng-mohamedkhalf.shop/api/OnlineSubSubjects/PayOnlineSubSubjectLectures",
@@ -106,20 +116,18 @@ export default function HomeworkGroupPage() {
               accept: "text/plain",
             },
             body: JSON.stringify({
-              onlineSubSubjectId: parseInt(groupId, 10),
+              onlineSubSubjectId: selectedHomeworkId,
             }),
           }
         );
 
-        if (!res.ok) {
-          throw new Error("فشل في الدفع");
-        }
+        if (!res.ok) throw new Error("فشل في الدفع");
 
-        const updatedBalance = money - price;
+        const updatedBalance = money - hw.price;
         setMoney(updatedBalance);
         localStorage.setItem("money", updatedBalance);
 
-        addSubscribedGroup(groupId.toString());
+        addSubscribedGroup(selectedHomeworkId.toString());
 
         setFeedbackMessage("تم فتح الواجب للطالب");
         setFeedbackColor("bg-green-600");
@@ -127,10 +135,10 @@ export default function HomeworkGroupPage() {
         setTimeout(() => {
           setFeedbackMessage(null);
           router.push(
-            `/subject/${subjectId}/homework/${groupId}/video/${selectedHomeworkId}?subjectTeacherId=${subjectTeacherId}`
+            `/subject/${subjectId}/homework/${subjectTeacherId}/video/${selectedHomeworkId}?subjectTeacherId=${subjectTeacherId}`
           );
         }, 2000);
-      } catch (error) {
+      } catch (e) {
         setFeedbackMessage("حدث خطأ أثناء الدفع");
         setFeedbackColor("bg-red-600");
         setTimeout(() => setFeedbackMessage(null), 2000);
@@ -142,39 +150,49 @@ export default function HomeworkGroupPage() {
     }
   };
 
-  if (loading) return <Spinner />;
-
-  if (!groupData)
-    return <p className="text-center text-red-600 mt-10">لا توجد بيانات</p>;
-
   return (
-    <div className="min-h-screen p-4 bg-gray-50" dir="rtl">
-      {/* زر الرجوع */}
-      <div className="flex justify-end mb-4 fixed top-4 right-4 sm:right-8 z-10">
-        <button
-          onClick={() => router.back()}
-          className="text-[#bf9916] text-2xl hover:text-[#a77f14] transition"
-          title="رجوع"
-        >
-          <FiArrowRight />
-        </button>
-      </div>
+    <div className="min-h-screen p-4 bg-gray-50" dir="rtl" lang="ar">
+      <button
+        onClick={() => router.back()}
+        className="text-[#bf9916] text-2xl mb-4"
+        title="رجوع"
+      >
+        &#8594;
+      </button>
 
-      <h1 className="text-2xl font-bold text-[#bf9916] mb-6">
-        الواجبات - <span>{groupData.name}</span>
-      </h1>
+      <h1 className="text-2xl font-bold mb-6 text-[#bf9916]">الواجبات</h1>
 
-      <div className="flex flex-col gap-4">
-        {groupData.homeWorks?.map((hw) => (
-          <button
-            key={hw.id}
-            onClick={() => handleHomeworkClick(hw.id)}
-            className="bg-white shadow-md rounded p-6 text-[#bf9916] font-semibold text-lg text-right hover:bg-[#fdf8ee] transition"
-          >
-            {hw.name}
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <Spinner />
+      ) : error ? (
+        <p className="text-red-600 font-bold text-center">{error}</p>
+      ) : homeworks.length === 0 ? (
+        <NoItem text="لا توجد واجبات الآن" />
+      ) : (
+        <ul className="space-y-3">
+          {homeworks.map((hw) => (
+            <li
+              key={hw.id}
+              className="bg-white p-4 rounded shadow cursor-pointer "
+              onClick={() => handleHomeworkClick(hw)}
+            >
+              <h3 className="text-[#bf9916] font-semibold text-lg mb-1">
+                {hw.name || "بدون عنوان"}
+              </h3>
+              <div className="flex gap-2 mb-1">
+                <span className="font-semibold text-[#bf9916]">الوصف:</span>
+                <p className="text-[#bf9916]">
+                  {hw.description || "لا يوجد وصف"}
+                </p>
+              </div>
+
+              <p className="text-green-600 font-bold">
+                السعر: {hw.price ?? 0} جنيه
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {showModal && (
         <div
@@ -188,10 +206,7 @@ export default function HomeworkGroupPage() {
             <h2 className="text-xl font-bold mb-4">اشتراك</h2>
             <p>يجب الاشتراك في الواجب أولاً</p>
             <div className="flex justify-end gap-4 mt-6">
-              <button
-                onClick={handleSubscribeGroup}
-                className="text-purple-600"
-              >
+              <button onClick={handleSubscribe} className="text-purple-600">
                 اشتراك
               </button>
               <button
@@ -209,6 +224,7 @@ export default function HomeworkGroupPage() {
         <div
           onClick={handleConfirmPayment}
           className="fixed bottom-0 left-0 right-0 bg-white text-[#bf9916] text-center py-4 shadow z-[999] cursor-pointer"
+          style={{ userSelect: "none" }}
         >
           {paidMessage}
         </div>

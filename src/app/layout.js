@@ -1,5 +1,3 @@
-// src/app/layout.js أو layout.jsx
-
 import "./globals.css";
 import Nav from "./Nav";
 import BottomNav from "./(Main)/BottomNav";

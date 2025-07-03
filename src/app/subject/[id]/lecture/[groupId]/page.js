@@ -26,8 +26,8 @@ export default function LectureGroupPage() {
   const [groupData, setGroupData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showPaymentBox, setShowPaymentBox] = useState(false);
   const [selectedLectureId, setSelectedLectureId] = useState(null);
-  const [paidMessage, setPaidMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [feedbackColor, setFeedbackColor] = useState("");
 
@@ -67,30 +67,62 @@ export default function LectureGroupPage() {
     fetchData();
   }, [token, subjectTeacherId, groupId]);
 
-  const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
+  const checkLectureAccess = async (lectureId) => {
+    try {
+      const res = await fetch(
+        `https://eng-mohamedkhalf.shop/api/OnlineSubSubjects/GetOnlineSubSubjectLectureById/${lectureId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+        }
+      );
+      const json = await res.json();
+      return json;
+    } catch (error) {
+      console.error("Error checking lecture access:", error);
+      return null;
+    }
+  };
 
-  const handleLectureClick = (lectureId) => {
-    const price = groupData?.price || 0;
+  const handleLectureClick = async (lectureId) => {
+    if (!groupData) return;
+    const price = groupData.price || 0;
+    const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
 
     if (price === 0 || isGroupSubscribed) {
-      router.push(
-        `/subject/${subjectId}/lecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
-      );
+      const lectureAccess = await checkLectureAccess(lectureId);
+      if (lectureAccess && lectureAccess.errorCode === 0) {
+        router.push(
+          `/subject/${subjectId}/lecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
+        );
+      } else if (
+        lectureAccess &&
+        (lectureAccess.errorCode === 70 || lectureAccess.errorCode === 45)
+      ) {
+        setSelectedLectureId(lectureId);
+        setShowModal(true);
+      } else {
+        setFeedbackMessage("حدث خطأ أثناء جلب بيانات المحاضرة");
+        setFeedbackColor("bg-red-600");
+        setTimeout(() => setFeedbackMessage(null), 3000);
+      }
     } else {
       setSelectedLectureId(lectureId);
       setShowModal(true);
-      setPaidMessage("");
+      setShowPaymentBox(false);
     }
   };
 
   const handleSubscribeGroup = () => {
-    setPaidMessage("باستخدام المحفظة");
+    setShowModal(false);
+    setShowPaymentBox(true);
   };
 
   const handleConfirmPayment = async () => {
     const price = groupData?.price || 0;
-    setPaidMessage("");
-    setShowModal(false);
+    setShowPaymentBox(false);
 
     if (money >= price) {
       try {
@@ -132,12 +164,12 @@ export default function LectureGroupPage() {
       } catch (error) {
         setFeedbackMessage("حدث خطأ أثناء الدفع");
         setFeedbackColor("bg-red-600");
-        setTimeout(() => setFeedbackMessage(null), 2000);
+        setTimeout(() => setFeedbackMessage(null), 3000);
       }
     } else {
       setFeedbackMessage("رصيد المحفظة غير كافى");
       setFeedbackColor("bg-red-600");
-      setTimeout(() => setFeedbackMessage(null), 2000);
+      setTimeout(() => setFeedbackMessage(null), 3000);
     }
   };
 
@@ -175,13 +207,13 @@ export default function LectureGroupPage() {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={handleSubscribeGroup}
-                className="text-purple-600"
+                className="text-[#bf9916] font-semibold"
               >
                 اشتراك
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-purple-600"
+                className="text-[#bf9916] font-semibold"
               >
                 إلغاء
               </button>
@@ -190,12 +222,20 @@ export default function LectureGroupPage() {
         </div>
       )}
 
-      {paidMessage && (
+      {showPaymentBox && (
         <div
-          onClick={handleConfirmPayment}
-          className="fixed bottom-0 left-0 right-0 bg-white text-[#bf9916] text-center py-4 shadow z-[999] cursor-pointer"
+          className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-end justify-center z-50"
+          onClick={() => setShowPaymentBox(false)}
         >
-          {paidMessage}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-t-3xl p-6 max-w-sm w-full cursor-pointer shadow-lg"
+            onClick={handleConfirmPayment}
+          >
+            <p className="text-[#bf9916] font-semibold text-center text-lg select-none">
+              باستخدام المحفظة
+            </p>
+          </div>
         </div>
       )}
 

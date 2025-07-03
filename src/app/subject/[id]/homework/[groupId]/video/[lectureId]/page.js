@@ -119,6 +119,8 @@ export default function HomeworkVideoPage() {
         }
       );
       const json = await res.json();
+      console.log("AddComment response:", json); // <==== هنا طبع الرد
+
       if (json.errorCode === 0) {
         setComments((prev) => [
           ...prev,
