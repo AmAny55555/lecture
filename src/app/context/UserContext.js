@@ -38,7 +38,6 @@ export function UserProvider({ children }) {
     }
   }, []);
 
-  // تحديث تلقائي للرصيد عند تغيّره في localStorage (مثلاً بعد الشحن)
   useEffect(() => {
     const handleStorageChange = (event) => {
       if (event.key === "money") {
@@ -65,7 +64,6 @@ export function UserProvider({ children }) {
     localStorage.setItem("money", money !== undefined ? money.toString() : "0");
   }
 
-  // تأكدنا هنا أن groupId يتحول لـ string قبل الإضافة
   function addSubscribedGroup(groupId) {
     const idStr = groupId.toString();
     if (!subscribedGroups.includes(idStr)) {
