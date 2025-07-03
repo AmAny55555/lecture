@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
-
 import { FiArrowRight } from "react-icons/fi";
 import { useUser } from "@/app/context/UserContext";
 
@@ -97,50 +96,50 @@ export default function QrLectureGroupPage() {
     setPaidMessage("");
     setShowModal(false);
 
-    if (money >= price) {
-      try {
-        const res = await fetch(
-          "https://eng-mohamedkhalf.shop/api/OnlineSubSubjects/PayOnlineSubSubjectLectures",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              lang: "ar",
-              "Content-Type": "application/json-patch+json",
-              accept: "text/plain",
-            },
-            body: JSON.stringify({
-              onlineSubSubjectId: parseInt(groupId, 10),
-            }),
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error("فشل في الدفع");
-        }
-
-        const updatedBalance = money - price;
-        setMoney(updatedBalance);
-        localStorage.setItem("money", updatedBalance);
-
-        addSubscribedGroup(groupId.toString());
-
-        setFeedbackMessage("تم فتح المحاضرة للطالب");
-        setFeedbackColor("bg-green-600");
-
-        setTimeout(() => {
-          setFeedbackMessage(null);
-          router.push(
-            `/subject/${subjectId}/qrlecture/${groupId}/video/${selectedLectureId}?subjectTeacherId=${subjectTeacherId}`
-          );
-        }, 2000);
-      } catch (error) {
-        setFeedbackMessage("حدث خطأ أثناء الدفع");
-        setFeedbackColor("bg-red-600");
-        setTimeout(() => setFeedbackMessage(null), 2000);
-      }
-    } else {
+    // لو مش معاه رصيد كافى
+    if (money < price) {
       setFeedbackMessage("رصيد المحفظة غير كافى");
+      setFeedbackColor("bg-red-600");
+      setTimeout(() => setFeedbackMessage(null), 2000);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/OnlineSubSubjects/PayOnlineSubSubjectLectures",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+            "Content-Type": "application/json-patch+json",
+            accept: "text/plain",
+          },
+          body: JSON.stringify({
+            onlineSubSubjectId: parseInt(groupId, 10),
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("فشل في الدفع");
+
+      const updatedBalance = money - price;
+      setMoney(updatedBalance);
+      localStorage.setItem("money", updatedBalance);
+
+      addSubscribedGroup(groupId.toString());
+
+      setFeedbackMessage("تم فتح المحاضرة للطالب");
+      setFeedbackColor("bg-green-600");
+
+      setTimeout(() => {
+        setFeedbackMessage(null);
+        router.push(
+          `/subject/${subjectId}/qrLecture/${groupId}/video/${selectedLectureId}?subjectTeacherId=${subjectTeacherId}`
+        );
+      }, 2000);
+    } catch (error) {
+      setFeedbackMessage("حدث خطأ أثناء الدفع");
       setFeedbackColor("bg-red-600");
       setTimeout(() => setFeedbackMessage(null), 2000);
     }

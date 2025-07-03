@@ -1,27 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useUser } from "./context/UserContext";
 
 function Nav() {
   const pathname = usePathname();
-  const { userName } = useUser();
+  const { userName, loadingUserName } = useUser();
 
   const [hydrated, setHydrated] = useState(false);
-  const [localUserName, setLocalUserName] = useState("");
-
   useEffect(() => {
     setHydrated(true);
-
-    if (!userName) {
-      const storedName = localStorage.getItem("userName") || "";
-      setLocalUserName(storedName);
-    } else {
-      setLocalUserName(userName);
-    }
-  }, [userName]);
+  }, []);
 
   const hiddenRoutes = [
     "/login",
@@ -44,6 +35,30 @@ function Nav() {
   if (shouldHideNavbar) return null;
   if (!hydrated) return null;
 
+  if (loadingUserName) {
+    return (
+      <div className="nav flex justify-between items-center px-4 sm:px-10 py-2">
+        <div className="right flex items-center justify-center gap-2">
+          <div>
+            <h1 className="sm:text-sm md:font-semibold md:text-2xl">
+              أهلاً بك ...
+            </h1>
+            <h1 className="font-medium text-right pt-2">... لنبدأ التعلم</h1>
+          </div>
+          <div className="img">
+            <Image
+              src="/56.png"
+              width={60}
+              height={60}
+              alt="logo"
+              className="object-fill rounded-full"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="nav flex justify-between items-center px-4 sm:px-10 py-2">
@@ -62,7 +77,7 @@ function Nav() {
         <div className="right flex items-center justify-center gap-2">
           <div>
             <h1 className="sm:text-sm md:font-semibold md:text-2xl">
-              {localUserName ? `أهلاً بك ${localUserName}` : "أهلاً بك"}
+              {userName ? `أهلاً بك ${userName}` : "أهلاً بك"}
             </h1>
             <h1 className="font-medium text-right pt-2">... لنبدأ التعلم</h1>
           </div>

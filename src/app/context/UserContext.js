@@ -12,6 +12,11 @@ export function UserProvider({ children }) {
   const [subscribedGroups, setSubscribedGroups] = useState([]);
 
   useEffect(() => {
+    const savedName = localStorage.getItem("userName");
+    if (savedName) {
+      setUserName(savedName);
+    }
+
     const savedMoney = localStorage.getItem("money");
     if (savedMoney !== null) {
       setMoney(parseFloat(savedMoney));
@@ -19,12 +24,11 @@ export function UserProvider({ children }) {
 
     const savedSubscribedGroups = localStorage.getItem("subscribedGroups");
     if (savedSubscribedGroups) {
-      setSubscribedGroups(JSON.parse(savedSubscribedGroups));
-    }
-
-    const savedUserName = localStorage.getItem("userName");
-    if (savedUserName) {
-      setUserName(savedUserName);
+      try {
+        setSubscribedGroups(JSON.parse(savedSubscribedGroups));
+      } catch {
+        setSubscribedGroups([]);
+      }
     }
 
     const savedPhone = localStorage.getItem("phoneNumber");
@@ -35,22 +39,62 @@ export function UserProvider({ children }) {
     const savedToken = localStorage.getItem("token");
     if (savedToken) {
       setToken(savedToken);
+      fetchUserNameFromServer(savedToken, savedName);
     }
   }, []);
+
+  const fetchUserNameFromServer = async (token, localName) => {
+    try {
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Students/CheckStudentData",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      if (data.errorCode === 0 && data.data?.fullName) {
+        const realName = data.data.fullName;
+        if (realName !== localName) {
+          setUserName(realName);
+          localStorage.setItem("userName", realName);
+        }
+      }
+    } catch (err) {
+      console.error("فشل في جلب بيانات المستخدم:", err);
+    }
+  };
 
   useEffect(() => {
     const handleStorageChange = (event) => {
       if (event.key === "money") {
         setMoney(parseFloat(event.newValue) || 0);
       }
+      if (event.key === "subscribedGroups") {
+        try {
+          const newGroups = JSON.parse(event.newValue);
+          if (Array.isArray(newGroups)) {
+            setSubscribedGroups(newGroups);
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+      if (event.key === "userName") {
+        setUserName(event.newValue || "");
+      }
     };
 
     window.addEventListener("storage", handleStorageChange);
-
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("subscribedGroups", JSON.stringify(subscribedGroups));
+  }, [subscribedGroups]);
 
   function login({ userName, phoneNumber, token, money }) {
     setUserName(userName || "");
@@ -67,9 +111,7 @@ export function UserProvider({ children }) {
   function addSubscribedGroup(groupId) {
     const idStr = groupId.toString();
     if (!subscribedGroups.includes(idStr)) {
-      const updated = [...subscribedGroups, idStr];
-      setSubscribedGroups(updated);
-      localStorage.setItem("subscribedGroups", JSON.stringify(updated));
+      setSubscribedGroups((prev) => [...prev, idStr]);
     }
   }
 

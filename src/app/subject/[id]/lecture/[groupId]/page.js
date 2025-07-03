@@ -67,51 +67,18 @@ export default function LectureGroupPage() {
     fetchData();
   }, [token, subjectTeacherId, groupId]);
 
-  const checkLectureAccess = async (lectureId) => {
-    try {
-      const res = await fetch(
-        `https://eng-mohamedkhalf.shop/api/OnlineSubSubjects/GetOnlineSubSubjectLectureById/${lectureId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            lang: "ar",
-          },
-        }
-      );
-      const json = await res.json();
-      return json;
-    } catch (error) {
-      console.error("Error checking lecture access:", error);
-      return null;
-    }
-  };
+  const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
 
   const handleLectureClick = async (lectureId) => {
-    if (!groupData) return;
-    const price = groupData.price || 0;
-    const isGroupSubscribed = subscribedGroups.includes(groupId?.toString());
+    const price = groupData?.price || 0;
 
     if (price === 0 || isGroupSubscribed) {
-      const lectureAccess = await checkLectureAccess(lectureId);
-      if (lectureAccess && lectureAccess.errorCode === 0) {
-        router.push(
-          `/subject/${subjectId}/lecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
-        );
-      } else if (
-        lectureAccess &&
-        (lectureAccess.errorCode === 70 || lectureAccess.errorCode === 45)
-      ) {
-        setSelectedLectureId(lectureId);
-        setShowModal(true);
-      } else {
-        setFeedbackMessage("حدث خطأ أثناء جلب بيانات المحاضرة");
-        setFeedbackColor("bg-red-600");
-        setTimeout(() => setFeedbackMessage(null), 3000);
-      }
+      router.push(
+        `/subject/${subjectId}/lecture/${groupId}/video/${lectureId}?subjectTeacherId=${subjectTeacherId}`
+      );
     } else {
       setSelectedLectureId(lectureId);
       setShowModal(true);
-      setShowPaymentBox(false);
     }
   };
 
@@ -142,9 +109,7 @@ export default function LectureGroupPage() {
           }
         );
 
-        if (!res.ok) {
-          throw new Error("فشل في الدفع");
-        }
+        if (!res.ok) throw new Error("فشل في الدفع");
 
         const updatedBalance = money - price;
         setMoney(updatedBalance);

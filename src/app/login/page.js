@@ -91,7 +91,6 @@ export default function Login() {
       });
 
       const result = await res.json();
-      console.log("🎯 بيانات المستخدم من السيرفر:", result.data);
 
       if (result.errorCode !== 0) {
         throw new Error(result.errorMessage || "فشل تسجيل الدخول");
@@ -100,25 +99,31 @@ export default function Login() {
       const token = result.data?.token;
       const fullName = result.data?.fullName;
       const studentId = result.data?.userId;
-      const balance = result.data?.walletBalance;
       const money = result.data?.money;
 
       if (token) {
-        Cookies.set("token", token, { expires: 7 });
+        Cookies.set("token", token, {
+          expires: 7,
+          path: "/",
+          sameSite: "Lax",
+        });
         Cookies.remove("studentDataComplete");
       }
 
-      if (fullName) Cookies.set("userName", fullName, { expires: 7 });
-      if (studentId) Cookies.set("studentId", studentId, { expires: 7 });
-      if (balance !== undefined)
-        localStorage.setItem("wallet_balance", balance);
-      if (money !== undefined) localStorage.setItem("money", money);
+      if (fullName) {
+        localStorage.setItem("userName", fullName);
+      }
+      if (studentId) {
+        Cookies.set("studentId", studentId, { expires: 7 });
+      }
+      if (money !== undefined) {
+        localStorage.setItem("money", money);
+      }
 
       login({
         userName: fullName,
         phoneNumber: data.phone,
         token,
-        walletBalance: balance,
         money,
       });
 

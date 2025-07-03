@@ -75,12 +75,10 @@ export default function HomeworkListPage() {
     fetchHomeworks();
   }, [token, subjectTeacherId]);
 
-  const isSubscribed = subscribedGroups.includes(
-    selectedHomeworkId?.toString()
-  );
-
   const handleHomeworkClick = (hw) => {
-    if (hw.price === 0 || isSubscribed) {
+    const isHwSubscribed = subscribedGroups.includes(hw.id.toString());
+
+    if (hw.price === 0 || isHwSubscribed) {
       router.push(
         `/subject/${subjectId}/homework/${subjectTeacherId}/video/${hw.id}?subjectTeacherId=${subjectTeacherId}`
       );
@@ -127,7 +125,13 @@ export default function HomeworkListPage() {
         setMoney(updatedBalance);
         localStorage.setItem("money", updatedBalance);
 
+        // ✅ حفظ الاشتراك في السياق و localStorage
         addSubscribedGroup(selectedHomeworkId.toString());
+        const updatedGroups = [
+          ...subscribedGroups,
+          selectedHomeworkId.toString(),
+        ];
+        localStorage.setItem("subscribedGroups", JSON.stringify(updatedGroups));
 
         setFeedbackMessage("تم فتح الواجب للطالب");
         setFeedbackColor("bg-green-600");
