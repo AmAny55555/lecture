@@ -45,7 +45,6 @@ function Page() {
           }
         );
         const data = await res.json();
-        console.log("Best rated teachers data:", data);
         if (data?.data) {
           setBestRatedTeachers(data.data);
         } else {
@@ -100,30 +99,34 @@ function Page() {
       : "/1.png";
 
     return (
-      <div className="shadow-lg p-6 rounded-xl bg-white max-w-sm w-[700px] flex items-center justify-center flex-col mb-6">
-        <div className="img w-[60px] h-[60px] relative rounded-full overflow-hidden mb-2">
-          <Image
-            src={imgSrc}
-            alt={teacher.teacherName}
-            fill
-            className="object-cover"
-          />
-        </div>
-        <p className="font-semibold">{teacher.teacherName || "اسم المدرس"}</p>
-        <p className="text-md text-gray-600 mt-2">
-          {teacher.teacherBiography || "لا يوجد وصف"}
-        </p>
-        <div className="flex gap-1 text-yellow-400 text-lg mt-2">
-          {[...Array(5)].map((_, i) => (
-            <i key={i} className="fa-solid fa-star"></i>
-          ))}
+      <div className="w-full px-4 sm:px-0 flex justify-center">
+        <div className="shadow-md hover:shadow-lg transition-all duration-300 p-6 rounded-xl bg-white w-full max-w-[700px] flex items-center justify-center flex-col mb-6">
+          <div className="img w-[60px] h-[60px] relative rounded-full overflow-hidden mb-2">
+            <Image
+              src={imgSrc}
+              alt={teacher.teacherName}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <p className="font-semibold text-center">
+            {teacher.teacherName || "اسم المدرس"}
+          </p>
+          <p className="text-md text-gray-600 mt-2 text-center">
+            {teacher.teacherBiography || "لا يوجد وصف"}
+          </p>
+          <div className="flex gap-1 text-yellow-400 text-lg mt-2">
+            {[...Array(5)].map((_, i) => (
+              <i key={i} className="fa-solid fa-star"></i>
+            ))}
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="mb-10 px-4 sm:px-8 md:px-16">
+    <div className="mb-10 px-4 sm:px-28 md:px-16">
       <div className="flex flex-col items-center justify-center relative mb-16">
         <div className="w-full flex justify-center mt-10 items-center">
           <Swiper
@@ -152,7 +155,7 @@ function Page() {
         dir="rtl"
         className="mt-6 flex flex-col items-center justify-center mb-10"
       >
-        <p className="text-xl sm:text-2xl font-semibold self-start mb-6 sm:mb-10 px-4 sm:px-10">
+        <p className="text-xl sm:text-2xl font-semibold self-start mb-6 sm:mb-20 px-4 sm:px-16">
           الأفضل تقييماً
         </p>
         {loadingBest ? (
@@ -166,8 +169,9 @@ function Page() {
         )}
       </div>
 
+      {/* Most Recent Teachers */}
       <div dir="rtl" className="flex flex-col items-center justify-center">
-        <p className="text-xl sm:text-2xl font-semibold self-start mb-6 sm:mb-10 px-4 sm:px-10">
+        <p className="text-xl sm:text-2xl font-semibold self-start mb-6 sm:mb-20 px-4 sm:px-10">
           أحدث المدرسين
         </p>
         {loadingRecent ? (

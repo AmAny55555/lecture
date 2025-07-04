@@ -29,14 +29,12 @@ export default function Page() {
   const [complaintSuccess, setComplaintSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // استرجاع قيمة التوكن من الكوكيز
   const getToken = () => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; token=`);
     return parts.length === 2 ? parts.pop().split(";").shift() : null;
   };
 
-  // مسح التوكن من الكوكيز نهائيًا
   const clearTokenCookie = () => {
     const COOKIE_DOMAIN = window.location.hostname;
     Cookies.remove("token", { path: "/", domain: COOKIE_DOMAIN });
@@ -44,12 +42,10 @@ export default function Page() {
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
   };
 
-  // إعادة التوجيه لصفحة التسجيل
   const redirectToRegister = () => {
     window.location.href = "/rejester";
   };
 
-  // دالة تسجيل الخروج
   const handleLogout = async () => {
     setLoading(true);
     try {
@@ -80,7 +76,6 @@ export default function Page() {
     setLoading(false);
   };
 
-  // دالة حذف الحساب
   const handleDeleteAccount = async () => {
     setLoading(true);
     try {
@@ -149,7 +144,6 @@ export default function Page() {
             stroke="#bf9916"
             strokeWidth="2.5"
           />
-          {/* باقي الأيقونة */}
         </svg>
       ),
     },
@@ -264,8 +258,14 @@ export default function Page() {
         )}
 
         {complaintModal && (
-          <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[9999]">
-            <div className="bg-white p-6 rounded-2xl w-80 text-center shadow-xl space-y-4">
+          <div
+            className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[9999]"
+            onClick={() => setComplaintModal(false)}
+          >
+            <div
+              className="bg-white p-6 rounded-2xl w-80 text-center shadow-xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
               <p className="text-xl font-bold text-[#bf9916]">
                 إرسال شكوى أو اقتراح
               </p>
@@ -277,7 +277,10 @@ export default function Page() {
               />
               <button
                 onClick={() => {
-                  /* handleComplaintSubmit */
+                  setComplaintSuccess(true);
+                  setComplaintModal(false);
+                  setComplaintText("");
+                  setTimeout(() => setComplaintSuccess(false), 3000);
                 }}
                 className="bg-[#bf9916] text-white px-6 py-2 rounded-xl font-semibold"
               >
@@ -290,7 +293,7 @@ export default function Page() {
         {complaintSuccess && (
           <div className="fixed bottom-4 right-1/2 translate-x-1/2 z-[9999] animate-zoom-in">
             <div className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl text-lg font-semibold">
-              تم تنفيذ الطلب بنجاح
+              تم ارسال الشكوى
             </div>
           </div>
         )}

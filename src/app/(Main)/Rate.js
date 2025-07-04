@@ -7,7 +7,7 @@ function Rate({ teacher }) {
   if (!teacher) return null;
 
   return (
-    <div className="shadow-lg p-8 rounded-xl bg-white max-w-sm w-[700px] flex items-center justify-center flex-col">
+    <div className="shadow-lg p-6 sm:p-8 rounded-xl bg-white w-full max-w-md mx-auto flex flex-col items-center justify-center">
       <div className="img w-[60px] h-[60px] relative rounded-full overflow-hidden mb-2">
         <Image
           src={

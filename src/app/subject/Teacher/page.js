@@ -76,16 +76,15 @@ function Page() {
       </div>
 
       <div>
-        <h1 className="text-2xl text-[#bf9916] font-medium mb-5 -mt-8">
+        <h1 className="text-lg sm:text-xl md:text-2xl text-[#bf9916] font-medium px-5">
           مدرسى الرياضيات
         </h1>
-
-        <div className="mt-10 flex flex-col items-center gap-6">
+        <div className="mt-10 px-5 flex flex-wrap justify-center gap-6">
           {teachers.map((teacher) => (
             <Link
               href={`/subject/${teacher.id}`}
               key={teacher.id}
-              className="cursor-pointer"
+              className="block flex-grow max-w-full basis-full sm:basis-[45%] md:basis-[40%] lg:basis-[30%]"
             >
               <Rate teacher={teacher} />
             </Link>

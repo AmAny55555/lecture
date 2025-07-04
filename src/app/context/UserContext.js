@@ -10,38 +10,7 @@ export function UserProvider({ children }) {
   const [token, setToken] = useState("");
   const [money, setMoney] = useState(0);
   const [subscribedGroups, setSubscribedGroups] = useState([]);
-
-  useEffect(() => {
-    const savedName = localStorage.getItem("userName");
-    if (savedName) {
-      setUserName(savedName);
-    }
-
-    const savedMoney = localStorage.getItem("money");
-    if (savedMoney !== null) {
-      setMoney(parseFloat(savedMoney));
-    }
-
-    const savedSubscribedGroups = localStorage.getItem("subscribedGroups");
-    if (savedSubscribedGroups) {
-      try {
-        setSubscribedGroups(JSON.parse(savedSubscribedGroups));
-      } catch {
-        setSubscribedGroups([]);
-      }
-    }
-
-    const savedPhone = localStorage.getItem("phoneNumber");
-    if (savedPhone) {
-      setPhoneNumber(savedPhone);
-    }
-
-    const savedToken = localStorage.getItem("token");
-    if (savedToken) {
-      setToken(savedToken);
-      fetchUserNameFromServer(savedToken, savedName);
-    }
-  }, []);
+  const [loadingUserName, setLoadingUserName] = useState(true);
 
   const fetchUserNameFromServer = async (token, localName) => {
     try {
@@ -62,34 +31,38 @@ export function UserProvider({ children }) {
         }
       }
     } catch (err) {
-      console.error("فشل في جلب بيانات المستخدم:", err);
+      console.error("❌ فشل في جلب بيانات المستخدم:", err);
+    } finally {
+      setLoadingUserName(false);
     }
   };
 
   useEffect(() => {
-    const handleStorageChange = (event) => {
-      if (event.key === "money") {
-        setMoney(parseFloat(event.newValue) || 0);
-      }
-      if (event.key === "subscribedGroups") {
-        try {
-          const newGroups = JSON.parse(event.newValue);
-          if (Array.isArray(newGroups)) {
-            setSubscribedGroups(newGroups);
-          }
-        } catch {
-          // ignore parse errors
-        }
-      }
-      if (event.key === "userName") {
-        setUserName(event.newValue || "");
-      }
-    };
+    const savedName = localStorage.getItem("userName");
+    if (savedName) setUserName(savedName);
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
+    const savedPhone = localStorage.getItem("phoneNumber");
+    if (savedPhone) setPhoneNumber(savedPhone);
+
+    const savedMoney = localStorage.getItem("money");
+    if (savedMoney !== null) setMoney(parseFloat(savedMoney));
+
+    const savedGroups = localStorage.getItem("subscribedGroups");
+    if (savedGroups) {
+      try {
+        setSubscribedGroups(JSON.parse(savedGroups));
+      } catch {
+        setSubscribedGroups([]);
+      }
+    }
+
+    const savedToken = localStorage.getItem("token");
+    if (savedToken) {
+      setToken(savedToken);
+      fetchUserNameFromServer(savedToken, savedName);
+    } else {
+      setLoadingUserName(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -108,28 +81,20 @@ export function UserProvider({ children }) {
     localStorage.setItem("money", money !== undefined ? money.toString() : "0");
   }
 
-  function addSubscribedGroup(groupId) {
-    const idStr = groupId.toString();
-    if (!subscribedGroups.includes(idStr)) {
-      setSubscribedGroups((prev) => [...prev, idStr]);
-    }
-  }
-
   function logout() {
     setUserName("");
     setPhoneNumber("");
     setToken("");
     setMoney(0);
     setSubscribedGroups([]);
+    localStorage.clear();
+  }
 
-    localStorage.removeItem("userName");
-    localStorage.removeItem("phoneNumber");
-    localStorage.removeItem("token");
-    localStorage.removeItem("money");
-    localStorage.removeItem("subscribedGroups");
-    localStorage.removeItem("wallet_balance");
-    localStorage.removeItem("studentId");
-    localStorage.removeItem("studentDataComplete");
+  function addSubscribedGroup(groupId) {
+    const idStr = groupId.toString();
+    if (!subscribedGroups.includes(idStr)) {
+      setSubscribedGroups((prev) => [...prev, idStr]);
+    }
   }
 
   return (
@@ -144,6 +109,7 @@ export function UserProvider({ children }) {
         addSubscribedGroup,
         login,
         logout,
+        loadingUserName,
       }}
     >
       {children}
