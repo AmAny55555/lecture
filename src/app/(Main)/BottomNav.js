@@ -90,6 +90,7 @@ function BottomNav({ isModalOpen = false }) {
     pathname.includes("/subject/Teacher") ||
     pathname.includes("/subject/subject2") ||
     pathname.includes("/subject/Math") ||
+    pathname.includes("/cart") ||
     pathname.startsWith("/subject/");
 
   if (shouldHide) return null;

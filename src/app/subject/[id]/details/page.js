@@ -77,16 +77,12 @@ export default function DetailsPage() {
         });
         const json = await res.json();
 
-        console.log("📦 البيانات الراجعة من السيرفر:", json);
-        console.log("📘 التبويب:", activeTab);
-
         if (json.errorCode !== 0) {
           setData([]);
         } else {
           setData(json.data || []);
         }
       } catch (e) {
-        console.error("❌ خطأ في جلب البيانات:", e);
         setError("خطأ أثناء جلب البيانات");
         setData([]);
       } finally {
@@ -144,7 +140,7 @@ export default function DetailsPage() {
         >
           &#8594;
         </button>
-        <h1 className="text-3xl text-white font-bold mt-8 mb-4 ">الرياضيات</h1>
+        <h1 className="text-3xl text-white font-bold mt-8 mb-4">الرياضيات</h1>
 
         <div className="grid grid-cols-2 gap-8 place-items-center mt-4 w-[90%] mx-auto">
           {tabs.map((tab) => (
@@ -234,7 +230,7 @@ function GroupGrid({
         const hasLectures =
           (type === "online" && item.onlineLectures?.length > 0) ||
           (type === "qr" && item.qrLectures?.length > 0) ||
-          (type === "homework" && item.id != null) || // هنا تعديل شرط الواجبات
+          (type === "homework" && item.id != null) ||
           type === "books";
 
         const handleClick = () => {
@@ -257,50 +253,91 @@ function GroupGrid({
           <div
             key={item.id}
             onClick={handleClick}
-            className="cursor-pointer rounded bg-white p-3 shadow-sm"
+            className={`cursor-pointer ${
+              type === "books"
+                ? "bg-gray-100 w-60 rounded-xl shadow-md p-0"
+                : "bg-white p-3 rounded shadow-sm"
+            }`}
           >
-            <h3 className="text-sm font-semibold text-[#bf9916] mb-1">
-              {item.name || item.title || "بدون عنوان"}
-            </h3>
-
-            {type === "online" && (
-              <p className="text-sm text-[#bf9916] mb-1">
-                عدد المحاضرات: {item.onlineLectures?.length ?? 0}
-              </p>
-            )}
-
-            {type === "qr" && (
-              <p className="text-sm text-[#bf9916] mb-1">
-                عدد المحاضرات: {item.qrLectures?.length ?? 0}
-              </p>
-            )}
-
-            {type === "homework" && (
-              <p className="text-sm text-[#bf9916] mb-1">
-                الوصف: {item.description || "لا يوجد وصف"}
-              </p>
-            )}
-
             {type === "books" ? (
-              <div className="text-sm text-[#bf9916] mb-1 space-y-2">
-                <div className="flex gap-2">
-                  <span className="font-semibold">الوصف:</span>
-                  <span className="text-[#bf9916] ">
-                    {item.description || "لا يوجد وصف"}
+              <div className="space-y-2">
+                {item.photos?.[0] ? (
+                  <img
+                    src={`https://eng-mohamedkhalf.shop${item.photos[0].replace(
+                      /\\/g,
+                      "/"
+                    )}`}
+                    alt={item.name}
+                    className="w-full h-40 object-cover rounded-xl "
+                  />
+                ) : (
+                  <div className="w-full h-40 rounded mb-2" />
+                )}
+
+                <h3 className="text-lg font-bold text-black">{item.name}</h3>
+
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <span className="text-[#bf9916] text-base">👤</span>
+                  <span>{item.fullName || "غير معروف"}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="text-[#bf9916] text-base">📅</span>
+                  <span>
+                    {new Date(item.createdAt).toLocaleDateString("ar-EG", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">السعر:</span>
-                  <span className="text-green-600 font-bold">
-                    {item.price ?? 0} جنيه
-                  </span>
+
+                <div className="flex justify-end px-1 gap-1 text-yellow-400 text-lg">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <span key={i}>{i < item.evaluation ? "★" : "☆"}</span>
+                  ))}
                 </div>
+
+                <p className="text-sm font-bold mb-5">
+                  {" "}
+                  {item.price === 0 ? (
+                    <span className="text-gray-600 text-lg p-5 ">مجاني</span>
+                  ) : (
+                    <span className="text-gray-600">{item.price} جنيه</span>
+                  )}
+                </p>
               </div>
             ) : (
-              <p className="font-bold text-sm flex justify-between">
-                <span className="text-[#bf9916]">السعر: </span>
-                <span className="text-green-600">{item.price ?? 0} جنيه</span>
-              </p>
+              <>
+                <h3 className="text-sm font-semibold text-[#bf9916] mb-1">
+                  {item.name || item.title || "بدون عنوان"}
+                </h3>
+
+                {type === "online" && (
+                  <p className="text-sm text-[#bf9916] mb-1">
+                    عدد المحاضرات: {item.onlineLectures?.length ?? 0}
+                  </p>
+                )}
+
+                {type === "qr" && (
+                  <p className="text-sm text-[#bf9916] mb-1">
+                    عدد المحاضرات: {item.qrLectures?.length ?? 0}
+                  </p>
+                )}
+
+                {type === "homework" && (
+                  <p className="text-sm text-[#bf9916] mb-1">
+                    الوصف: {item.description || "لا يوجد وصف"}
+                  </p>
+                )}
+
+                <p className="font-bold text-sm flex justify-between">
+                  <span className="text-[#bf9916]">السعر: </span>
+                  <span className="text-green-600">
+                    {item.price === 0 ? "مجاني" : `${item.price} جنيه`}
+                  </span>
+                </p>
+              </>
             )}
           </div>
         );

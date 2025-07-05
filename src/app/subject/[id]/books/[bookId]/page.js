@@ -4,6 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Spinner from "@/app/components/Spinner";
 import NoItem from "@/app/NoItem";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import { motion, AnimatePresence } from "framer-motion";
+import { useUser } from "@/app/context/UserContext";
 
 function getTokenFromCookies() {
   const cookieString = document.cookie;
@@ -26,6 +31,9 @@ export default function BookLinksPage() {
   const [error, setError] = useState(null);
   const [links, setLinks] = useState([]);
   const [bookData, setBookData] = useState(null);
+  const [showMsg, setShowMsg] = useState(false);
+
+  const { setCartCount } = useUser();
 
   useEffect(() => {
     setToken(getTokenFromCookies());
@@ -54,7 +62,7 @@ export default function BookLinksPage() {
           setBookData(null);
           setError("لا يوجد بيانات");
         } else {
-          setLinks(json.data?.links || null);
+          setLinks(json.data?.links || []);
           setBookData(json.data || null);
         }
       } catch (e) {
@@ -70,79 +78,153 @@ export default function BookLinksPage() {
     fetchBookDetails();
   }, [token, bookId]);
 
+  const handleAddToCart = async () => {
+    if (!token || !bookId) return;
+
+    try {
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Order/AddToCart",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json-patch+json",
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+          body: JSON.stringify({
+            bookId: parseInt(bookId),
+            quantity: 1,
+          }),
+        }
+      );
+
+      const json = await res.json();
+
+      if (json.errorCode === 0) {
+        setCartCount((prev) => prev + 1);
+
+        setShowMsg(true);
+        setTimeout(() => {
+          setShowMsg(false);
+          router.push(
+            `/subject/${subjectId}/details?subjectTeacherId=${subjectTeacherId}`
+          );
+        }, 2500);
+      } else {
+        console.error("فشل الإضافة إلى السلة:", json.message);
+      }
+    } catch (error) {
+      console.error("خطأ أثناء الإضافة للسلة:", error);
+    }
+  };
+
   return (
-    <div className="min-h-screen p-4 bg-gray-50" dir="rtl" lang="ar">
-      {/* زر الرجوع ثابت أعلى اليمين */}
-      <div className="flex justify-end fixed top-4 right-4 z-10">
+    <div className="min-h-screen p-4 pt-10 relative" dir="rtl" lang="ar">
+      <div className="absolute top-4 right-4 z-10">
         <button
           onClick={() => router.back()}
           className="text-[#bf9916] text-2xl hover:text-[#a77f14] transition"
           title="رجوع"
         >
-          &#8594; {/* السهم لليمين */}
+          &#8594;
         </button>
       </div>
-
-      <h1 className="text-2xl font-bold mb-10 mt-10 text-[#bf9916]">الكتب</h1>
 
       {loading ? (
         <Spinner />
       ) : error ? (
         <p className="text-red-500">{error}</p>
-      ) : links && links.length > 0 ? (
-        <ul className="space-y-3">
-          {links.map((linkItem, index) => (
-            <li
-              key={index}
-              className="bg-white p-4 rounded shadow cursor-pointer hover:bg-yellow-100 transition"
-              onClick={() => {
-                if (linkItem.url) window.open(linkItem.url, "_blank");
-              }}
-            >
-              <h3 className="text-[#bf9916] font-semibold text-lg mb-1">
-                {linkItem.title || `رابط ${index + 1}`}
-              </h3>
-              {linkItem.description && (
-                <p className="text-gray-700 text-sm">{linkItem.description}</p>
-              )}
-              <p className="text-blue-600 underline mt-1 cursor-pointer">
-                اضغط لفتح الرابط
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : bookData ? (
-        <div className="bg-white p-6 rounded shadow flex gap-6 items-center">
-          <div className="w-32 h-40 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-            {bookData.photos && bookData.photos.length > 0 ? (
-              <img
-                src={`https://eng-mohamedkhalf.shop${bookData.photos[0].replace(
-                  /\\/g,
-                  "/"
-                )}`}
-                alt={bookData.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                لا توجد صورة
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold mb-2 text-[#bf9916]">
-              اسم الكتاب : {bookData.name}
-            </h2>
-            <p className="text-[#bf9916] mb-2">
-              الوصف: {bookData.description || "لا يوجد وصف"}
-            </p>
-            <p className="text-green-600 font-bold">
-              السعر: {bookData.price ?? 0} جنيه
-            </p>
-          </div>
-        </div>
       ) : (
-        <NoItem text="لا يوجد عناوين للكتاب" />
+        <>
+          {bookData?.photos?.length > 0 ? (
+            <div className="w-full flex justify-center mt-6 items-center">
+              <Swiper
+                modules={[Autoplay]}
+                autoplay={{ delay: 3000, disableOnInteraction: false }}
+                loop={true}
+                className="w-full max-w-[700px] mx-auto"
+              >
+                {bookData.photos.map((photo, i) => (
+                  <SwiperSlide key={i} className="flex justify-center">
+                    <img
+                      src={`https://eng-mohamedkhalf.shop${photo.replace(
+                        /\\/g,
+                        "/"
+                      )}`}
+                      alt={`book-${i}`}
+                      className="rounded-xl w-full h-[300px] object-cover"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+          ) : (
+            <div className="w-full h-[400px] bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
+              لا توجد صورة
+            </div>
+          )}
+
+          <div className="mt-8 max-w-[700px] w-full mx-auto px-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+              <h2 className="text-xl font-semibold text-[#bf9916]">
+                {bookData?.name}
+              </h2>
+              <p className="text-green-600 font-bold text-lg">
+                {bookData?.price === 0 ? "مجاني" : `${bookData?.price} جنيه`}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <span className="text-[#bf9916] text-base">👤</span>
+              <span>{bookData?.fullName || "غير معروف"}</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-yellow-500 text-lg font-bold">
+              {Array.from({ length: 5 }, (_, i) => (
+                <span key={i}>
+                  {i < (bookData?.evaluation ?? 0) ? "★" : "☆"}
+                </span>
+              ))}
+              <span className="bg-[#bf9916] text-white px-2 py-0.5 text-sm rounded">
+                5
+              </span>
+            </div>
+
+            <div>
+              <h3 className="text-[#bf9916] font-semibold text-lg mb-2">
+                وصف الكتاب
+              </h3>
+              <div className="border-2 border-[#bf9916] p-4 rounded">
+                <p className="text-sm text-gray-800">
+                  {bookData?.description || "لا يوجد وصف"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={handleAddToCart}
+                className="bg-[#bf9916] text-white px-6 py-3 rounded-lg text-lg hover:bg-[#a77f14] transition w-full"
+              >
+                إضافة للسلة
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {showMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 50, scale: 0.8 }}
+                transition={{ duration: 0.5 }}
+                className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-green-600 text-white py-3 px-6 rounded-lg shadow-lg z-50 font-bold text-center"
+              >
+                تم إضافة المنتج بنجاح
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
       )}
     </div>
   );

@@ -11,6 +11,7 @@ export function UserProvider({ children }) {
   const [money, setMoney] = useState(0);
   const [subscribedGroups, setSubscribedGroups] = useState([]);
   const [loadingUserName, setLoadingUserName] = useState(true);
+  const [cartCount, setCartCount] = useState(0);
 
   const fetchUserNameFromServer = async (token, localName) => {
     try {
@@ -37,6 +38,29 @@ export function UserProvider({ children }) {
     }
   };
 
+  const fetchCartCountFromAPI = async (token) => {
+    try {
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Order/GetCartItems",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+        }
+      );
+      const data = await res.json();
+      if (data.errorCode === 0 && Array.isArray(data.data)) {
+        setCartCount(data.data.length);
+      } else {
+        setCartCount(0);
+      }
+    } catch (err) {
+      console.error("❌ فشل في جلب عدد عناصر السلة:", err);
+      setCartCount(0);
+    }
+  };
+
   useEffect(() => {
     const savedName = localStorage.getItem("userName");
     if (savedName) setUserName(savedName);
@@ -60,6 +84,7 @@ export function UserProvider({ children }) {
     if (savedToken) {
       setToken(savedToken);
       fetchUserNameFromServer(savedToken, savedName);
+      fetchCartCountFromAPI(savedToken);
     } else {
       setLoadingUserName(false);
     }
@@ -79,6 +104,9 @@ export function UserProvider({ children }) {
     localStorage.setItem("phoneNumber", phoneNumber || "");
     localStorage.setItem("token", token || "");
     localStorage.setItem("money", money !== undefined ? money.toString() : "0");
+
+    // جلب عدد السلة بعد تسجيل الدخول
+    fetchCartCountFromAPI(token);
   }
 
   function logout() {
@@ -87,6 +115,7 @@ export function UserProvider({ children }) {
     setToken("");
     setMoney(0);
     setSubscribedGroups([]);
+    setCartCount(0);
     localStorage.clear();
   }
 
@@ -94,6 +123,37 @@ export function UserProvider({ children }) {
     const idStr = groupId.toString();
     if (!subscribedGroups.includes(idStr)) {
       setSubscribedGroups((prev) => [...prev, idStr]);
+    }
+  }
+
+  // ✅ الإضافة إلى السلة عن طريق API
+  async function addToCartAPI({ bookId, quantity = 1 }) {
+    if (!token) return;
+
+    try {
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Order/AddToCart",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+          body: JSON.stringify({ bookId, quantity }),
+        }
+      );
+      const data = await res.json();
+
+      if (data.errorCode === 0) {
+        fetchCartCountFromAPI(token);
+        return { success: true, message: "تمت الإضافة للسلة" };
+      } else {
+        return { success: false, message: data.errorMessage || "حدث خطأ" };
+      }
+    } catch (err) {
+      console.error("❌ فشل الإضافة للسلة:", err);
+      return { success: false, message: "فشل الاتصال بالسيرفر" };
     }
   }
 
@@ -110,6 +170,9 @@ export function UserProvider({ children }) {
         login,
         logout,
         loadingUserName,
+        cartCount,
+        setCartCount,
+        addToCartAPI,
       }}
     >
       {children}

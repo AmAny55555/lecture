@@ -1,18 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "./context/UserContext";
 
 function Nav() {
   const pathname = usePathname();
-  const { userName, loadingUserName } = useUser();
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
+  const router = useRouter();
+  const { userName, loadingUserName, cartCount } = useUser();
 
   const hiddenRoutes = [
     "/login",
@@ -24,20 +20,24 @@ function Nav() {
     "/more/contact",
     "/more/wallet",
     "/more/order",
+    "/cart",
   ];
 
   const shouldHideNavbar =
     hiddenRoutes.includes(pathname) || pathname.startsWith("/subject/");
 
-  if (shouldHideNavbar || !hydrated || loadingUserName) return null;
+  if (shouldHideNavbar || loadingUserName) return null;
 
   return (
     <div className="nav flex justify-between items-center px-4 sm:px-10 py-2">
       <div className="icon flex gap-7 text-xl text-[#bf9916]">
-        <div className="relative">
+        <div
+          className="relative cursor-pointer"
+          onClick={() => router.push("/cart")}
+        >
           <i className="fa-solid fa-cart-shopping text-xl"></i>
           <span className="absolute bg-red-500 -top-3 left-5 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">
-            0
+            {cartCount}
           </span>
         </div>
         <div>
