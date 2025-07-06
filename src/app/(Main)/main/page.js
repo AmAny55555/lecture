@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import Spinner from "@/app/components/Spinner";
@@ -99,8 +100,11 @@ function Page() {
       : "/1.png";
 
     return (
-      <div className="w-full px-4 sm:px-0 flex justify-center">
-        <div className="shadow-md hover:shadow-lg transition-all duration-300 p-6 rounded-xl bg-white w-full max-w-[700px] flex items-center justify-center flex-col mb-6">
+      <Link
+        href={`/subject/${teacher.id}`}
+        className="w-full px-4 sm:px-0 flex justify-center no-underline"
+      >
+        <div className="shadow-md hover:shadow-lg transition-all duration-300 p-6 rounded-xl bg-white w-full max-w-[700px] flex items-center justify-center flex-col mb-6 cursor-pointer">
           <div className="img w-[60px] h-[60px] relative rounded-full overflow-hidden mb-2">
             <Image
               src={imgSrc}
@@ -109,7 +113,7 @@ function Page() {
               className="object-cover"
             />
           </div>
-          <p className="font-semibold text-center">
+          <p className="font-semibold text-center text-black">
             {teacher.teacherName || "اسم المدرس"}
           </p>
           <p className="text-md text-gray-600 mt-2 text-center">
@@ -121,7 +125,7 @@ function Page() {
             ))}
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 
