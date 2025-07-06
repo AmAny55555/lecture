@@ -4,20 +4,31 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUser } from "../context/UserContext";
+import NoItem from "../NoItem";
+
+function Spinner() {
+  return (
+    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+  );
+}
 
 export default function CartPage() {
-  const { token } = useUser();
+  const { token, cartCount, setCartCount } = useUser();
   const router = useRouter();
 
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [address, setAddress] = useState("");
+  const [addressError, setAddressError] = useState("");
   const [successMessage, setSuccessMessage] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [cartTotals, setCartTotals] = useState({ total: 0, deliveryFees: 0 });
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
 
   useEffect(() => {
     if (!token) return;
+
     const fetchCart = async () => {
       try {
         const res = await fetch(
@@ -36,6 +47,7 @@ export default function CartPage() {
             total: data.data.total,
             deliveryFees: data.data.deliveryFees,
           });
+          setCartCount(data.data.items.length);
         }
       } catch (err) {
         console.error("فشل في جلب السلة", err);
@@ -43,50 +55,18 @@ export default function CartPage() {
         setLoading(false);
       }
     };
+
     fetchCart();
   }, [token]);
 
-  const handleDeleteItem = async (itemId) => {
-    try {
-      const res = await fetch(
-        `https://eng-mohamedkhalf.shop/api/Order/DeleteCartItem?itemId=${itemId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            lang: "ar",
-          },
-        }
-      );
-      const data = await res.json();
-      if (data?.errorCode === 0) {
-        setCartItems((prev) => prev.filter((item) => item.id !== itemId));
-      }
-    } catch (err) {
-      console.error("خطأ في حذف العنصر", err);
-    }
-  };
-
-  const handleDeleteAll = async () => {
-    try {
-      await fetch("https://eng-mohamedkhalf.shop/api/Order/DeleteCart", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          lang: "ar",
-        },
-      });
-      setCartItems([]);
-    } catch (err) {
-      console.error("فشل حذف السلة كاملة", err);
-    }
-  };
-
   const handleConfirmOrder = async () => {
     if (!address.trim()) {
-      alert("يجب إدخال العنوان");
+      setAddressError("برجاء كتابة العنوان");
       return;
     }
+    setAddressError("");
+    setConfirmLoading(true);
+
     try {
       const res = await fetch(
         "https://eng-mohamedkhalf.shop/api/Order/AddOrUpdateAddress",
@@ -97,10 +77,11 @@ export default function CartPage() {
             lang: "ar",
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ address }),
+          body: JSON.stringify({ OrderAddress: address }),
         }
       );
       const data = await res.json();
+
       if (data?.errorCode === 0) {
         const confirm = await fetch(
           "https://eng-mohamedkhalf.shop/api/Order/ConfirmOrder",
@@ -116,20 +97,34 @@ export default function CartPage() {
         if (resData?.errorCode === 0) {
           setShowModal(false);
           setSuccessMessage(true);
+          setCartItems([]);
+          setCartCount(0);
+          setOrderConfirmed(true);
           setTimeout(() => {
             setSuccessMessage(false);
-            router.push("/more/order");
-          }, 3000);
+            router.push("/main");
+          }, 1500);
+        } else {
+          alert(resData.errorMessage || "حدث خطأ أثناء تأكيد الطلب");
         }
+      } else {
+        alert(data.errorMessage || "حدث خطأ أثناء حفظ العنوان");
       }
     } catch (err) {
       console.error("فشل تأكيد الطلب", err);
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
-  if (loading) return <p className="text-center py-10">جارٍ التحميل...</p>;
-  if (!cartItems.length)
-    return <p className="text-center py-10">لا توجد منتجات في السلة</p>;
+  if (loading) return <Spinner />;
+
+  if (!cartItems.length && !orderConfirmed)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <NoItem text="لا توجد كتب الان" />
+      </div>
+    );
 
   const totalAll = cartTotals.total + cartTotals.deliveryFees;
 
@@ -150,13 +145,24 @@ export default function CartPage() {
           </button>
         </div>
 
-        <div className="bg-[#f0f0f0] shadow-md p-3 rounded-xl mt-12 flex items-center justify-between">
-          <span className="text-xl font-bold text-[#bf9916]">
-            عدد الكتب: {cartItems.length}
-          </span>
-          <button onClick={handleDeleteAll} className="text-red-500 text-2xl">
-            <i className="fa-solid fa-trash"></i>
-          </button>
+        <div>
+          <p className="text-center text-[#bf9916] text-2xl font-semibold font-serif">
+            عربة التسوق
+          </p>
+          <div className="bg-[#f0f0f0] shadow-md p-3 rounded-xl mt-12 flex items-center justify-between">
+            <span className="text-xl font-bold text-[#bf9916]">
+              عدد الكتب: {cartItems.length}
+            </span>
+            <button
+              onClick={() => {
+                setCartItems([]);
+                setCartCount(0);
+              }}
+              className="text-red-500 text-2xl"
+            >
+              <i className="fa-solid fa-trash"></i>
+            </button>
+          </div>
         </div>
 
         {cartItems.map((item) => (
@@ -177,11 +183,9 @@ export default function CartPage() {
             )}
 
             <div className="flex-1 text-right space-y-1">
-              <p className=" font-mono font-semibold text-lg">
-                {item.bookName}
-              </p>
+              <p className="font-mono font-semibold text-lg">{item.bookName}</p>
               <p className="text-gray-800 mb-3">الكمية: {item.quantity}</p>
-              <p className=" text-gray-800">
+              <p className="text-gray-800">
                 الإجمالى:{" "}
                 <span className="text-green-700 font-semibold">
                   {item.subTotal} ج
@@ -189,15 +193,18 @@ export default function CartPage() {
               </p>
             </div>
 
-            <div className="text-left flex flex-col items-start  justify-between h-full">
-              <p className=" text-gray-800">
+            <div className="text-left flex flex-col items-start justify-between h-full">
+              <p className="text-gray-800">
                 السعر:
                 <span className="text-green-700 font-semibold">
                   {item.price} ج
                 </span>
               </p>
               <button
-                onClick={() => handleDeleteItem(item.id)}
+                onClick={() => {
+                  setCartItems((prev) => prev.filter((i) => i.id !== item.id));
+                  setCartCount((prev) => Math.max(0, prev - 1));
+                }}
                 className="text-red-500 text-lg mt-3 relative -left-6"
               >
                 <i className="fa-solid fa-trash"></i>
@@ -235,7 +242,10 @@ export default function CartPage() {
       {showModal && (
         <div
           className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[9999]"
-          onClick={() => setShowModal(false)}
+          onClick={() => {
+            setShowModal(false);
+            setAddressError("");
+          }}
         >
           <div
             className="bg-white p-6 rounded-2xl w-80 text-right shadow-xl space-y-4"
@@ -247,17 +257,26 @@ export default function CartPage() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="اكتب العنوان هنا"
-              className="w-full p-2 rounded-md border border-gray-300 text-right"
+              className={`w-full p-2 rounded-md border text-right ${
+                addressError ? "border-red-500" : "border-gray-300"
+              }`}
             />
+            {addressError && (
+              <p className="text-red-600 text-sm mt-1">{addressError}</p>
+            )}
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleConfirmOrder}
-                className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold"
+                className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-2"
+                disabled={confirmLoading}
               >
-                تأكيد الطلب
+                {confirmLoading ? <Spinner /> : "تأكيد الطلب"}
               </button>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setAddressError("");
+                }}
                 className="text-gray-600 px-4 py-2"
               >
                 إلغاء
@@ -270,7 +289,7 @@ export default function CartPage() {
       {successMessage && (
         <div className="fixed bottom-4 right-1/2 translate-x-1/2 z-[9999] animate-zoom-in">
           <div className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl text-lg font-semibold">
-            تم تأكيد الطلب ✅
+            تم تأكيد الطلب بنجاح ✅
           </div>
         </div>
       )}
@@ -288,6 +307,14 @@ export default function CartPage() {
         }
         .animate-zoom-in {
           animation: zoom-in 0.4s ease-out forwards;
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>

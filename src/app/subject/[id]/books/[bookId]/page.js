@@ -32,12 +32,40 @@ export default function BookLinksPage() {
   const [links, setLinks] = useState([]);
   const [bookData, setBookData] = useState(null);
   const [showMsg, setShowMsg] = useState(false);
+  const [message, setMessage] = useState("");
+  const [cartItems, setCartItems] = useState([]);
 
   const { setCartCount } = useUser();
 
   useEffect(() => {
     setToken(getTokenFromCookies());
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchCartItems = async () => {
+      try {
+        const res = await fetch(
+          "https://eng-mohamedkhalf.shop/api/Order/GetCartItems",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              lang: "ar",
+            },
+          }
+        );
+        const json = await res.json();
+        if (json.errorCode === 0 && Array.isArray(json.data.items)) {
+          setCartItems(json.data.items);
+        }
+      } catch (err) {
+        console.error("خطأ في جلب السلة:", err);
+      }
+    };
+
+    fetchCartItems();
+  }, [token]);
 
   useEffect(() => {
     if (!token || !bookId) return;
@@ -81,6 +109,15 @@ export default function BookLinksPage() {
   const handleAddToCart = async () => {
     if (!token || !bookId) return;
 
+    const isAlreadyInCart = cartItems.some((item) => item.booKId === +bookId);
+
+    if (isAlreadyInCart) {
+      setMessage("تم إضافة المنتج من قبل");
+      setShowMsg(true);
+      setTimeout(() => setShowMsg(false), 2500);
+      return;
+    }
+
     try {
       const res = await fetch(
         "https://eng-mohamedkhalf.shop/api/Order/AddToCart",
@@ -102,7 +139,7 @@ export default function BookLinksPage() {
 
       if (json.errorCode === 0) {
         setCartCount((prev) => prev + 1);
-
+        setMessage("تم إضافة المنتج بنجاح");
         setShowMsg(true);
         setTimeout(() => {
           setShowMsg(false);
@@ -220,7 +257,7 @@ export default function BookLinksPage() {
                 transition={{ duration: 0.5 }}
                 className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-green-600 text-white py-3 px-6 rounded-lg shadow-lg z-50 font-bold text-center"
               >
-                تم إضافة المنتج بنجاح
+                {message}
               </motion.div>
             )}
           </AnimatePresence>

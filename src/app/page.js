@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Spinner from "./components/Spinner"; // عدل المسار حسب مكان مكون Spinner عندك
-
+import Spinner from "./components/Spinner";
 export default function Home() {
   const router = useRouter();
 
@@ -12,7 +11,6 @@ export default function Home() {
       const token = localStorage.getItem("token");
       console.log("التوكن الموجود في localStorage:", token);
 
-      // تحقق أولاً من الفلاج لو بيانات الطالب مكتملة مسبقًا
       const isComplete = localStorage.getItem("studentDataComplete");
       if (isComplete === "true") {
         console.log("البيانات مكتملة حسب الفلاج المحلي، التوجيه إلى /main");
@@ -28,7 +26,7 @@ export default function Home() {
 
       try {
         console.log("جارٍ انتظار 1 ثانية قبل طلب التحقق من بيانات الطالب");
-        await new Promise((r) => setTimeout(r, 1000)); // تأخير 1 ثانية
+        await new Promise((r) => setTimeout(r, 1000));
 
         console.log("جارٍ إرسال طلب التحقق من بيانات الطالب");
         const res = await fetch(
@@ -55,7 +53,7 @@ export default function Home() {
 
         if (result?.data === true) {
           console.log("البيانات كاملة، سيتم التوجيه إلى /main");
-          // حدد الفلاج هنا لو حبيت:
+
           localStorage.setItem("studentDataComplete", "true");
           router.replace("/main");
         } else {

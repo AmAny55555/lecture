@@ -8,7 +8,7 @@ import { useUser } from "./context/UserContext";
 function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { userName, loadingUserName, cartCount } = useUser();
+  const { userName, cartCount } = useUser();
 
   const hiddenRoutes = [
     "/login",
@@ -26,7 +26,7 @@ function Nav() {
   const shouldHideNavbar =
     hiddenRoutes.includes(pathname) || pathname.startsWith("/subject/");
 
-  if (shouldHideNavbar || loadingUserName) return null;
+  if (shouldHideNavbar) return null;
 
   return (
     <div className="nav flex justify-between items-center px-4 sm:px-10 py-2">
@@ -37,7 +37,7 @@ function Nav() {
         >
           <i className="fa-solid fa-cart-shopping text-xl"></i>
           <span className="absolute bg-red-500 -top-3 left-5 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">
-            {cartCount}
+            {typeof cartCount === "number" ? cartCount : 0}
           </span>
         </div>
         <div>
