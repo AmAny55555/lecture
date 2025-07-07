@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import Cookies from "js-cookie";
 
 const UserContext = createContext();
 
@@ -14,21 +15,7 @@ export function UserProvider({ children }) {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    const savedMoney = localStorage.getItem("money");
-    if (savedMoney !== null) setMoney(parseFloat(savedMoney));
-
-    const savedSubscribedGroups = localStorage.getItem("subscribedGroups");
-    if (savedSubscribedGroups) {
-      setSubscribedGroups(JSON.parse(savedSubscribedGroups));
-    }
-
-    const savedUserName = localStorage.getItem("userName");
-    if (savedUserName) setUserName(savedUserName);
-
-    const savedPhone = localStorage.getItem("phoneNumber");
-    if (savedPhone) setPhoneNumber(savedPhone);
-
-    const savedToken = localStorage.getItem("token");
+    const savedToken = Cookies.get("token") || "";
     if (savedToken) {
       setToken(savedToken);
 
@@ -47,6 +34,20 @@ export function UserProvider({ children }) {
         })
         .catch((err) => console.error("فشل تحميل عدد السلة", err));
     }
+
+    const savedMoney = localStorage.getItem("money");
+    if (savedMoney !== null) setMoney(parseFloat(savedMoney));
+
+    const savedSubscribedGroups = localStorage.getItem("subscribedGroups");
+    if (savedSubscribedGroups) {
+      setSubscribedGroups(JSON.parse(savedSubscribedGroups));
+    }
+
+    const savedUserName = localStorage.getItem("userName");
+    if (savedUserName) setUserName(savedUserName);
+
+    const savedPhone = localStorage.getItem("phoneNumber");
+    if (savedPhone) setPhoneNumber(savedPhone);
   }, []);
 
   useEffect(() => {
@@ -104,6 +105,8 @@ export function UserProvider({ children }) {
     localStorage.removeItem("wallet_balance");
     localStorage.removeItem("studentId");
     localStorage.removeItem("studentDataComplete");
+
+    Cookies.remove("token");
   }
 
   function addSubscribedGroup(groupId) {
@@ -174,7 +177,9 @@ export function UserProvider({ children }) {
     <UserContext.Provider
       value={{
         userName,
+        setUserName,
         phoneNumber,
+        setPhoneNumber,
         token,
         money,
         setMoney,

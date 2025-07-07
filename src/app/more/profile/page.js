@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
 import { useUser } from "@/app/context/UserContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const profileSchema = z.object({
   fullName: z.string().min(2).max(100),
@@ -21,14 +21,6 @@ function getCookie(name) {
   return "";
 }
 
-function Spinner() {
-  return (
-    <div className="flex justify-center mt-2">
-      <div className="w-6 h-6 border-4 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
-}
-
 export default function UpdateProfile() {
   const router = useRouter();
   const { setUserName, setPhoneNumber } = useUser();
@@ -38,13 +30,13 @@ export default function UpdateProfile() {
   const [email, setEmail] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const getToken = () => {
-    return `Bearer ${getCookie("token")}`;
+    const token = getCookie("token");
+    return `Bearer ${token}`;
   };
 
   useEffect(() => {
@@ -61,7 +53,6 @@ export default function UpdateProfile() {
         );
 
         const data = await res.json();
-        console.log("🔥 بيانات المستخدم:", data.data);
 
         if (data.errorCode === 0 && data.data) {
           setName(data.data.fullName || "");
@@ -74,13 +65,8 @@ export default function UpdateProfile() {
           setPhoneNumber(data.data.landLinePhone || "");
           localStorage.setItem("userName", data.data.fullName || "");
           localStorage.setItem("phoneNumber", data.data.landLinePhone || "");
-        } else {
-          throw new Error("فشل في جلب البيانات");
         }
-      } catch (error) {
-        setMessageType("error");
-        setMessage("❌ خطأ في تحميل البيانات");
-      }
+      } catch {}
     }
 
     fetchUserData();
@@ -93,14 +79,6 @@ export default function UpdateProfile() {
     }
   }, [message]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewImage(URL.createObjectURL(file));
-    }
-  };
-
   const handleUpdate = async () => {
     const validation = profileSchema.safeParse({
       fullName: name,
@@ -111,7 +89,7 @@ export default function UpdateProfile() {
 
     if (!validation.success) {
       setMessageType("error");
-      setMessage("❌ البيانات غير صحيحة");
+      setMessage("فشل في التحديث");
       return;
     }
 
@@ -150,13 +128,14 @@ export default function UpdateProfile() {
         localStorage.setItem("userName", name);
         localStorage.setItem("phoneNumber", phone);
         setMessageType("success");
-        setMessage("✅ تم التحديث بنجاح");
+        setMessage("تم التحديث");
       } else {
-        throw new Error("خطأ في الاستجابة");
+        setMessageType("error");
+        setMessage("فشل في التحديث");
       }
-    } catch (error) {
+    } catch {
       setMessageType("error");
-      setMessage("❌ فشل في التحديث");
+      setMessage("فشل في التحديث");
     } finally {
       setLoading(false);
     }
@@ -190,7 +169,12 @@ export default function UpdateProfile() {
             <input
               type="file"
               accept="image/*"
-              onChange={handleImageChange}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  setPreviewImage(URL.createObjectURL(file));
+                }
+              }}
               className="hidden"
             />
           </label>
@@ -252,8 +236,6 @@ export default function UpdateProfile() {
           {loading ? "جارٍ الحفظ..." : "تحديث البيانات"}
         </button>
 
-        {loading && <Spinner />}
-
         <AnimatePresence>
           {message && (
             <motion.div
@@ -261,9 +243,9 @@ export default function UpdateProfile() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className={`px-4 py-2 rounded-xl mt-4 text-sm text-white ${
+              className={`px-4 py-2 rounded-xl mt-4 text-sm text-white text-center ${
                 messageType === "success" ? "bg-green-600" : "bg-red-600"
-              } text-center`}
+              }`}
             >
               {message}
             </motion.div>

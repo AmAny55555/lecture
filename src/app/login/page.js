@@ -122,18 +122,17 @@ export default function Login() {
 
       if (token) {
         Cookies.set("token", token, { expires: 7, path: "/", sameSite: "Lax" });
+        localStorage.setItem("token", token); // <=== مهم تحفظ التوكن في localStorage كمان
         Cookies.remove("studentDataComplete");
       }
 
       if (userId) Cookies.set("studentId", userId, { expires: 7 });
       if (money !== undefined) localStorage.setItem("money", money);
 
-      // ✅ حفظ الاسم من نتيجة تسجيل الدخول فقط
       if (fullName) {
         localStorage.setItem("userName", fullName);
       }
 
-      // ✅ تحديث الكونتكست مباشرةً
       login({
         userName: fullName,
         phoneNumber: data.phone,
@@ -141,7 +140,6 @@ export default function Login() {
         money,
       });
 
-      // ✅ التحقق من إكمال البروفايل فقط (بدون اسم)
       const checkRes = await fetch(
         "https://eng-mohamedkhalf.shop/api/Students/CheckStudentData",
         {

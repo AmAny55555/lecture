@@ -12,10 +12,9 @@ function Page() {
   const router = useRouter();
   const { userName, phoneNumber: userPhoneNumber, money, setMoney } = useUser();
 
-  const [phoneNumber, setPhoneNumber] = useState(userPhoneNumber || "");
-  const [balance, setBalance] = useState(
-    !isNaN(parseFloat(money)) ? parseFloat(money) : 0
-  );
+  // الرقم من الكونتكست مباشرة:
+  const phoneNumber = userPhoneNumber || "";
+
   const [showChargeBox, setShowChargeBox] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
@@ -34,10 +33,6 @@ function Page() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    setBalance(!isNaN(parseFloat(money)) ? parseFloat(money) : 0);
-  }, [money]);
-
-  useEffect(() => {
     const storedToken = Cookies.get("token") || "";
     setToken(storedToken);
 
@@ -47,9 +42,6 @@ function Page() {
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data?.data?.phoneNumber && data.errorCode === 0) {
-            setPhoneNumber(data.data.phoneNumber);
-          }
           setLoading(false);
         })
         .catch(() => setLoading(false));
@@ -152,7 +144,7 @@ function Page() {
         return;
       }
 
-      // ✅ خزّن الباركود بعد نجاح الشحن فقط
+      // خزّن الباركود بعد نجاح الشحن فقط
       const usedBarcodes = JSON.parse(
         localStorage.getItem("used_barcodes") || "[]"
       );
@@ -161,7 +153,7 @@ function Page() {
         localStorage.setItem("used_barcodes", JSON.stringify(usedBarcodes));
       }
 
-      // ✅ تحديث الرصيد من API
+      // تحديث الرصيد من API
       const balanceRes = await fetch(
         "https://eng-mohamedkhalf.shop/api/Wallet/GetWalletBalance",
         {
@@ -175,9 +167,8 @@ function Page() {
       const balanceData = await balanceRes.json();
       if (balanceData?.errorCode === 0 && balanceData?.data != null) {
         const newBalance = parseFloat(balanceData.data);
-        setMoney(newBalance); // تحديث الكونتكست
-        setBalance(newBalance); // تحديث المحفظة الحالية
-        localStorage.setItem("money", newBalance); // حفظ جديد
+        setMoney(newBalance); // تحديث الرصيد في الكونتكست
+        localStorage.setItem("money", newBalance);
         showMessage("تم الشحن بنجاح", "success");
       } else {
         showMessage("تم الشحن، لكن لم نتمكن من قراءة الرصيد", "info");
@@ -283,7 +274,7 @@ function Page() {
               <div className="relative z-10 text-center">
                 <p className="text-2xl font-bold">{userName}</p>
                 <div className="mt-3 text-3xl font-bold flex justify-center items-center gap-2">
-                  <span>{balance.toFixed(2)}</span>
+                  <span>{money.toFixed(2)}</span>
                   <span className="text-lg">جنيه</span>
                 </div>
               </div>
@@ -311,14 +302,6 @@ function Page() {
             <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded-xl text-lg z-[1000]">
               تم نسخ الرقم
             </div>
-          )}
-
-          {showChargeBox && !showQRModal && (
-            <div
-              id="chargeBoxBg"
-              className="fixed inset-0 bg-[rgba(0,0,0,0.4)] z-40"
-              onClick={handleChargeBoxBackgroundClick}
-            />
           )}
 
           {showChargeBox && !showQRModal && (

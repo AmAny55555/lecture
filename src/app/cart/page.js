@@ -59,6 +59,73 @@ export default function CartPage() {
     fetchCart();
   }, [token]);
 
+  const handleDeleteItem = async (itemId) => {
+    try {
+      const res = await fetch(
+        `https://eng-mohamedkhalf.shop/api/Order/DeleteCartItem?itemId=${itemId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+        }
+      );
+      const data = await res.json();
+
+      if (data?.errorCode === 0) {
+        const cartRes = await fetch(
+          "https://eng-mohamedkhalf.shop/api/Order/GetCartItems",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              lang: "ar",
+            },
+          }
+        );
+        const cartData = await cartRes.json();
+
+        if (cartData?.errorCode === 0 && Array.isArray(cartData.data.items)) {
+          setCartItems(cartData.data.items);
+          setCartCount(cartData.data.items.length);
+          setCartTotals({
+            total: cartData.data.total,
+            deliveryFees: cartData.data.deliveryFees,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("خطأ أثناء حذف العنصر من السلة:", error);
+    }
+  };
+
+  const handleClearCart = async () => {
+    try {
+      const res = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Order/DeleteCart",
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      if (data?.errorCode === 0) {
+        setCartItems([]);
+        setCartCount(0);
+        setCartTotals({ total: 0, deliveryFees: 0 });
+      } else {
+        console.error("فشل في حذف السلة:", data?.errorMessage);
+      }
+    } catch (error) {
+      console.error("خطأ أثناء حذف السلة:", error);
+    }
+  };
+
   const handleConfirmOrder = async () => {
     if (!address.trim()) {
       setAddressError("برجاء كتابة العنوان");
@@ -145,24 +212,20 @@ export default function CartPage() {
           </button>
         </div>
 
-        <div>
-          <p className="text-center text-[#bf9916] text-2xl font-semibold font-serif">
-            عربة التسوق
-          </p>
-          <div className="bg-[#f0f0f0] shadow-md p-3 rounded-xl mt-12 flex items-center justify-between">
-            <span className="text-xl font-bold text-[#bf9916]">
-              عدد الكتب: {cartItems.length}
-            </span>
-            <button
-              onClick={() => {
-                setCartItems([]);
-                setCartCount(0);
-              }}
-              className="text-red-500 text-2xl"
-            >
-              <i className="fa-solid fa-trash"></i>
-            </button>
-          </div>
+        <p className="text-center text-[#bf9916] text-2xl font-semibold font-serif">
+          عربة التسوق
+        </p>
+        <div className="bg-[#f0f0f0] shadow-md p-3 rounded-xl mt-12 flex items-center justify-between">
+          <span className="text-xl font-bold text-[#bf9916]">
+            عدد الكتب: {cartItems.length}
+          </span>
+          <button
+            onClick={handleClearCart}
+            className="text-red-500 text-2xl"
+            title="تفريغ السلة"
+          >
+            <i className="fa-solid fa-trash"></i>
+          </button>
         </div>
 
         {cartItems.map((item) => (
@@ -195,17 +258,15 @@ export default function CartPage() {
 
             <div className="text-left flex flex-col items-start justify-between h-full">
               <p className="text-gray-800">
-                السعر:
+                السعر:{" "}
                 <span className="text-green-700 font-semibold">
                   {item.price} ج
                 </span>
               </p>
               <button
-                onClick={() => {
-                  setCartItems((prev) => prev.filter((i) => i.id !== item.id));
-                  setCartCount((prev) => Math.max(0, prev - 1));
-                }}
+                onClick={() => handleDeleteItem(item.id)}
                 className="text-red-500 text-lg mt-3 relative -left-6"
+                title="حذف عنصر"
               >
                 <i className="fa-solid fa-trash"></i>
               </button>
