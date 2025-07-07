@@ -291,9 +291,9 @@ function RegisterPage() {
             انشاء حساب
           </button>
 
-          <p className="text-center text-gray-600 mt-2 text-lg font-medium">
+          <p className="text-center text-gray-600 mt-2  font-medium">
             هل لديك حساب؟{" "}
-            <Link href="/" className="text-purple-900 text-lg font-medium pr-2">
+            <Link href="/" className="text-purple-900  font-medium pr-2">
               تسجيل دخول
             </Link>
           </p>

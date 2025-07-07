@@ -109,15 +109,6 @@ export default function BookLinksPage() {
   const handleAddToCart = async () => {
     if (!token || !bookId) return;
 
-    const isAlreadyInCart = cartItems.some((item) => item.booKId === +bookId);
-
-    if (isAlreadyInCart) {
-      setMessage("تم إضافة المنتج من قبل");
-      setShowMsg(true);
-      setTimeout(() => setShowMsg(false), 2500);
-      return;
-    }
-
     try {
       const res = await fetch(
         "https://eng-mohamedkhalf.shop/api/Order/AddToCart",
@@ -137,19 +128,26 @@ export default function BookLinksPage() {
 
       const json = await res.json();
 
-      if (json.errorCode === 0) {
-        setCartCount((prev) => prev + 1);
-        setMessage("تم إضافة المنتج بنجاح");
-        setShowMsg(true);
-        setTimeout(() => {
-          setShowMsg(false);
-          router.push(
-            `/subject/${subjectId}/details?subjectTeacherId=${subjectTeacherId}`
-          );
-        }, 2500);
-      } else {
-        console.error("فشل الإضافة إلى السلة:", json.message);
-      }
+      setMessage("تم إضافة المنتج");
+      setShowMsg(true);
+
+      const updatedRes = await fetch(
+        "https://eng-mohamedkhalf.shop/api/Order/GetCartItems",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            lang: "ar",
+          },
+        }
+      );
+      const updatedJson = await updatedRes.json();
+      const newCount = updatedJson?.data?.items?.length || 0;
+      setCartCount(newCount);
+
+      setTimeout(() => {
+        setShowMsg(false);
+        router.back();
+      }, 2500);
     } catch (error) {
       console.error("خطأ أثناء الإضافة للسلة:", error);
     }
