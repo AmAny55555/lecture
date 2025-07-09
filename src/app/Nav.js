@@ -13,6 +13,7 @@ function Nav() {
   const hiddenRoutes = [
     "/login",
     "/rejester",
+    "/basic",
     "/more-info",
     "/more/profile",
     "/more/notification",
@@ -21,6 +22,7 @@ function Nav() {
     "/more/wallet",
     "/more/order",
     "/cart",
+    "/",
   ];
 
   const shouldHideNavbar =
