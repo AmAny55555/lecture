@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import NoItem from "../../NoItem";
 import { useRouter } from "next/navigation";
@@ -16,6 +17,28 @@ function Spinner() {
       <div className="w-10 h-10 border-4 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
   );
+}
+
+function formatArabicDate(dateStr) {
+  const months = [
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
+  ];
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
 }
 
 export default function Orders() {
@@ -40,7 +63,6 @@ export default function Orders() {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Response from server:", data);
         setOrders(data.data || []);
       })
       .catch(() => {
@@ -67,27 +89,43 @@ export default function Orders() {
   }
 
   return (
-    <div className="min-h-screen p-4 relative">
+    <div className="min-h-screen p-4 bg-[#f9f9f9]" dir="rtl" lang="ar">
       <button
         onClick={() => router.back()}
-        className="text-[#bf9916] text-3xl absolute top-5 right-5 hover:text-yellow-600 transition"
+        className="text-[#bf9916] text-3xl absolute top-5 right-5  hover:text-yellow-600 transition"
         aria-label="الرجوع للخلف"
       >
         <i className="fa-solid fa-arrow-right"></i>
       </button>
 
-      <h2 className="text-2xl font-semibold mb-6 text-center">الطلبات</h2>
-      <ul className="max-w-4xl mx-auto space-y-4">
+      <div className="max-w-3xl mx-auto space-y-5 mt-10">
         {orders.map((order) => (
-          <li
+          <div
             key={order.id}
-            className="p-4 border border-gray-300 rounded-lg hover:shadow-lg transition cursor-pointer"
+            className="bg-white shadow-md rounded-xl p-4 flex justify-between items-center"
           >
-            الطلب رقم <span className="text-[#bf9916]">{order.id}</span> -
-            التاريخ: <span className="text-gray-700">{order.date}</span>
-          </li>
+            <div className="text-right space-y-1">
+              <p className="text-lg font-bold text-[#bf9916]">
+                {order.orderNumber}
+              </p>
+              <p className="text-gray-600 text-sm">
+                {formatArabicDate(order.createdOn)}
+              </p>
+              <p className="text-gray-800 font-semibold">
+                الإجمالي:{" "}
+                <span className="text-green-700">{order.total} ج</span>
+              </p>
+            </div>
+            <div className="text-left">
+              <span className="text-green-600 font-semibold">
+                {order.orderStatus === "In Progress"
+                  ? "قيد التنفيذ"
+                  : order.orderStatus}
+              </span>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

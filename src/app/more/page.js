@@ -42,8 +42,8 @@ export default function Page() {
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;";
   };
 
-  const redirectToRegister = () => {
-    window.location.href = "/rejester";
+  const redirectToHome = () => {
+    window.location.href = "/";
   };
 
   const handleLogout = async () => {
@@ -53,7 +53,7 @@ export default function Page() {
       clearTokenCookie();
       if (!token) {
         setLoading(false);
-        redirectToRegister();
+        redirectToHome();
         return;
       }
       const res = await fetch(
@@ -66,65 +66,12 @@ export default function Page() {
       if (res.ok) {
         localStorage.clear();
         setShowModal(false);
-        redirectToRegister();
+        redirectToHome();
       } else {
         console.error("فشل تسجيل الخروج");
       }
     } catch (err) {
       console.error("خطأ أثناء تسجيل الخروج:", err);
-    }
-    setLoading(false);
-  };
-
-  const handleDeleteAccount = async () => {
-    setLoading(true);
-    try {
-      const token = getToken();
-      clearTokenCookie();
-      if (!token) {
-        setLoading(false);
-        redirectToRegister();
-        return;
-      }
-      const userInfoRes = await fetch(
-        "https://eng-mohamedkhalf.shop/api/Users/GetUserInfo",
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}`, lang: "ar" },
-        }
-      );
-      const phoneNumber = (await userInfoRes.json()).data?.phoneNumber;
-      if (!phoneNumber) {
-        setLoading(false);
-        redirectToRegister();
-        return;
-      }
-      const res = await fetch(
-        "https://eng-mohamedkhalf.shop/api/Users/Forcelogout",
-        {
-          method: "PUT",
-          headers: {
-            accept: "text/plain",
-            "Content-Type": "application/json-patch+json",
-            Authorization: `Bearer ${token}`,
-            lang: "ar",
-          },
-          body: JSON.stringify({ phoneNumber }),
-        }
-      );
-      if (res.ok) {
-        localStorage.clear();
-        setShowModal(false);
-        setComplaintSuccess(true);
-        setTimeout(() => {
-          setComplaintSuccess(false);
-          redirectToRegister();
-        }, 4000);
-      } else {
-        console.error("فشل حذف الحساب");
-      }
-    } catch (err) {
-      console.error("خطأ أثناء حذف الحساب:", err);
     }
     setLoading(false);
   };
@@ -187,7 +134,6 @@ export default function Page() {
       text: "تسجيل الخروج",
       icon: <i className="fa-solid fa-right-from-bracket"></i>,
     },
-    { text: "حذف الحساب", icon: <i className="fa-solid fa-user-slash"></i> },
   ];
 
   return (
@@ -201,9 +147,6 @@ export default function Page() {
             onClick={() => {
               if (btn.text === "تسجيل الخروج") {
                 setModalType("logout");
-                setShowModal(true);
-              } else if (btn.text === "حذف الحساب") {
-                setModalType("delete");
                 setShowModal(true);
               } else if (btn.text === "الشكاوى والاقتراحات") {
                 setComplaintModal(true);
@@ -226,25 +169,16 @@ export default function Page() {
         {showModal && (
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.4)] flex items-center justify-center z-[9999]">
             <div className="bg-white p-6 rounded-2xl w-80 text-right shadow-xl space-y-4">
-              <p className="text-2xl font-bold text-purple-900">
-                {modalType === "delete" ? "حذف الحساب" : "تسجيل الخروج"}
-              </p>
+              <p className="text-2xl font-bold text-purple-900">تسجيل الخروج</p>
               <p className="text-lg font-medium text-gray-700">
-                {modalType === "delete"
-                  ? "هل أنت متأكد من حذف الحساب؟"
-                  : "هل أنت متأكد من تسجيل الخروج؟"}
+                هل أنت متأكد من تسجيل الخروج؟
               </p>
               <div className="flex mt-4 gap-2 justify-end">
                 <button
                   className="px-4 py-2 text-purple-950 font-semibold"
-                  onClick={() => {
-                    modalType === "delete"
-                      ? handleDeleteAccount()
-                      : handleLogout();
-                    setShowModal(false);
-                  }}
+                  onClick={handleLogout}
                 >
-                  {modalType === "delete" ? "حذف الحساب" : "تسجيل الخروج"}
+                  تسجيل الخروج
                 </button>
                 <button
                   className="px-4 py-2 text-gray-600"

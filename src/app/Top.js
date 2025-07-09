@@ -26,13 +26,14 @@ function Top() {
   return (
     <div className="fixed top-0 left-0 w-full z-50">
       <div
-        className="absolute left-0 h-[3px] bg-[#854d0e] z-50 transition-all duration-200"
+        className="absolute left-0 top-22 h-[3px] bg-[#854d0e] z-50 transition-all duration-200"
         style={{
-          width: `${scrollProgress}%`,
+          width: `${scrollProgress}%`, // لازم `` مع ${} ل string interpolation صح
           bottom: "-3px",
         }}
       ></div>
 
+      {/* موبايل */}
       <div className="flex md:hidden bg-white border-b-[#fde047] border-b-4 px-[5%] py-[2%] items-center justify-between shadow-md">
         <div className="relative">
           <button
@@ -70,6 +71,7 @@ function Top() {
         </button>
       </div>
 
+      {/* ديسكتوب */}
       <div
         className={`hidden md:flex fixed top-0 left-0 w-full bg-white border-b-[#fde047] border-b-4 px-[5%] py-[1%] items-center justify-between transition-all duration-500 ease-in-out transform ${
           showHeader

@@ -78,6 +78,7 @@ function BottomNav({ isModalOpen = false }) {
   }, [pathname]);
 
   const shouldHide =
+    pathname === "/" ||
     pathname.includes("/login") ||
     pathname.includes("/rejester") ||
     pathname.includes("/more-info") ||
@@ -92,7 +93,6 @@ function BottomNav({ isModalOpen = false }) {
     pathname.includes("/subject/Math") ||
     pathname.includes("/cart") ||
     pathname.includes("/basic") ||
-    pathname.includes("/") ||
     pathname.startsWith("/subject/");
 
   if (shouldHide) return null;

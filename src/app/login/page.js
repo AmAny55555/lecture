@@ -54,7 +54,7 @@ const InputField = ({ name, type = "text", placeholder, icon }) => {
   );
 };
 
-export default function Login() {
+export default function Page() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -95,7 +95,7 @@ export default function Login() {
     checkLogin();
   }, [router]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data, hasForcedLogout = false) => {
     setErrorMessage("");
 
     const payload = {
@@ -115,6 +115,28 @@ export default function Login() {
       const result = await res.json();
       console.log("📦 Login response:", result);
 
+      // 🟡 لو الحساب مسجل مسبقاً وملوش Forced Logout قبل كدة
+      if (result.errorCode === 54 && !hasForcedLogout) {
+        // 🟠 نفذ Force Logout الأول
+        const forceRes = await fetch(
+          "https://eng-mohamedkhalf.shop/api/Users/Forcelogout",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json-patch+json",
+              lang: "ar",
+            },
+            body: JSON.stringify({ phoneNumber: data.phone }),
+          }
+        );
+
+        const forceData = await forceRes.json();
+        console.log("📦 Force logout result:", forceData);
+
+        // 🟢 جرب تسجل دخول تاني بعد الـ logout
+        return onSubmit(data, true);
+      }
+
       if (result.errorCode !== 0)
         throw new Error(result.errorMessage || "فشل تسجيل الدخول");
 
@@ -122,16 +144,13 @@ export default function Login() {
 
       if (token) {
         Cookies.set("token", token, { expires: 7, path: "/", sameSite: "Lax" });
-        localStorage.setItem("token", token); // <=== مهم تحفظ التوكن في localStorage كمان
+        localStorage.setItem("token", token);
         Cookies.remove("studentDataComplete");
       }
 
       if (userId) Cookies.set("studentId", userId, { expires: 7 });
       if (money !== undefined) localStorage.setItem("money", money);
-
-      if (fullName) {
-        localStorage.setItem("userName", fullName);
-      }
+      if (fullName) localStorage.setItem("userName", fullName);
 
       login({
         userName: fullName,
@@ -193,7 +212,7 @@ export default function Login() {
 
         <FormProvider {...methods}>
           <form
-            onSubmit={methods.handleSubmit(onSubmit)}
+            onSubmit={methods.handleSubmit((data) => onSubmit(data))}
             className="w-full max-w-md"
           >
             <InputField

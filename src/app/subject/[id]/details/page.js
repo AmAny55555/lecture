@@ -299,9 +299,8 @@ function GroupGrid({
                 </div>
 
                 <p className="text-sm font-bold mb-5">
-                  {" "}
                   {item.price === 0 ? (
-                    <span className="text-gray-600 text-lg p-5 ">مجاني</span>
+                    <span className="text-gray-600 text-lg p-5">مجاني</span>
                   ) : (
                     <span className="text-gray-600">{item.price} جنيه</span>
                   )}
@@ -334,7 +333,13 @@ function GroupGrid({
                 <p className="font-bold text-sm flex justify-between">
                   <span className="text-[#bf9916]">السعر: </span>
                   <span className="text-green-600">
-                    {item.price === 0 ? "مجاني" : `${item.price} جنيه`}
+                    {type === "qr"
+                      ? item.qrLectures?.[0]?.price === 0
+                        ? "مجاني"
+                        : `${item.qrLectures?.[0]?.price} جنيه`
+                      : item.price === 0
+                      ? "مجاني"
+                      : `${item.price} جنيه`}
                   </span>
                 </p>
               </>

@@ -52,6 +52,5 @@ export default function Home() {
 
   if (isChecking) return null;
 
-  // ❗️لو مش مسجل دخول ولا حاجة → يعرض واجهة Basic
   return <Basic />;
 }

@@ -161,6 +161,8 @@ export default function CartPage() {
           }
         );
         const resData = await confirm.json();
+        console.log("📦 تأكيد الطلب:", resData);
+
         if (resData?.errorCode === 0) {
           setShowModal(false);
           setSuccessMessage(true);

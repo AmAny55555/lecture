@@ -128,7 +128,7 @@ function RegisterPage() {
       }
 
       setSuccessMessage("تم إنشاء الحساب بنجاح ✅");
-      setTimeout(() => router.push("/"), 1500);
+      setTimeout(() => router.push("/login"), 1500);
     } catch (err) {
       setErrorMessage(err.message || "حدث خطأ");
     }
@@ -293,7 +293,7 @@ function RegisterPage() {
 
           <p className="text-center text-gray-600 mt-2  font-medium">
             هل لديك حساب؟{" "}
-            <Link href="/" className="text-purple-900  font-medium pr-2">
+            <Link href="/login" className="text-purple-900  font-medium pr-2">
               تسجيل دخول
             </Link>
           </p>
